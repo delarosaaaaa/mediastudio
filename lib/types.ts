@@ -78,8 +78,8 @@ export interface Competitor {
 
 export interface CompetitiveData {
   competitors:  Competitor[];
-  sov:          { brand: string; pct: number }[];
-  market_share: { brand: string; pct: number }[];
+  sov:          { brand?: string; name?: string; pct: number }[];
+  market_share: { brand?: string; name?: string; pct: number }[];
   market_gaps:  { title: string; description: string }[];
 }
 
