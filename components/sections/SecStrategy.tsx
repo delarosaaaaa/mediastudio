@@ -1,18 +1,10 @@
 "use client";
 import { T, TY } from "@/lib/tokens";
 import { FeedbackBar } from "@/components/ui/FeedbackBar";
-import type { FunnelData, ChannelData, Channel } from "@/lib/types";
+import type { Channel } from "@/lib/types";
 
-// Strategy combines funnel + channel data
-interface StrategyData {
-  stages?:         FunnelData["stages"];
-  retargeting?:    FunnelData["retargeting"];
-  channels?:       ChannelData["channels"];
-  channel_overlap?: ChannelData["channel_overlap"];
-  synergy_score?:  ChannelData["synergy_score"];
-  synergy_notes?:  ChannelData["synergy_notes"];
-  [key: string]: unknown;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StrategyData = Record<string, any>;
 
 interface Props { d: StrategyData; raw: string; }
 

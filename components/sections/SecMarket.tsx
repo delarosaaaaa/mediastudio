@@ -8,17 +8,8 @@ interface MarketSegment { name: string; pct: number; }
 interface MarketTrend   { direction: "up" | "down" | "neutral"; title: string; description: string; }
 interface MarketGap     { title: string; description: string; }
 
-interface MarketData {
-  tam?:         string;
-  sam?:         string;
-  target_size?: string;
-  growth?:      string;
-  segments?:    MarketSegment[];
-  trends?:      MarketTrend[];
-  opportunities?: MarketGap[];
-  positioning_space?: string;
-  [key: string]: unknown;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type MarketData = Record<string, any>;
 
 interface Props { d: MarketData; raw: string; }
 
