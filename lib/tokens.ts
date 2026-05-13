@@ -1,8 +1,8 @@
 export const T = {
-  bg:   "#F5F4F0",
-  sur:  "#FFFFFF",
-  s2:   "#F5F4F0",
-  s3:   "#E8E6E0",
+  bg:   "#F5F4F0",   // warm off-white page background
+  sur:  "#FFFFFF",   // card surfaces (white)
+  s2:   "#EFEDE8",   // inset elements, subtle backgrounds (slightly darker than bg)
+  s3:   "#E8E6E0",   // borders, dividers
   t1:   "#0D0D0D",
   t2:   "#3A3A3A",
   t3:   "#888888",
@@ -18,10 +18,10 @@ export const T = {
 } as const;
 
 export const TY = {
-  cardLabel: { fontSize: 9,  fontWeight: 700 as const, color: T.t3, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 9 },
-  bodyLg:    { fontSize: 13, color: T.t2, lineHeight: 1.7 },
-  bodyMd:    { fontSize: 12, color: T.t2, lineHeight: 1.6 },
-  bodySm:    { fontSize: 11, color: T.t2, lineHeight: 1.55 },
-  label:     { fontSize: 10, color: T.t3, fontWeight: 500 as const },
-  num:       { fontSize: 16, fontWeight: 800 as const, color: T.t1, letterSpacing: "-.02em" as const, lineHeight: 1 },
+  cardLabel: { fontSize: 9,  fontWeight: 700 as const, color: "#888888", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 9 },
+  bodyLg:    { fontSize: 13, color: "#3A3A3A", lineHeight: 1.7 },
+  bodyMd:    { fontSize: 12, color: "#3A3A3A", lineHeight: 1.6 },
+  bodySm:    { fontSize: 11, color: "#3A3A3A", lineHeight: 1.55 },
+  label:     { fontSize: 10, color: "#888888", fontWeight: 500 as const },
+  num:       { fontSize: 16, fontWeight: 800 as const, color: "#0D0D0D", letterSpacing: "-.02em" as const, lineHeight: 1 },
 } as const;

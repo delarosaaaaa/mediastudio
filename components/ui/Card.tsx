@@ -1,4 +1,3 @@
-import { T } from "@/lib/tokens";
 import type { CSSProperties, ReactNode } from "react";
 
 interface CardProps {
@@ -8,7 +7,13 @@ interface CardProps {
 
 export function Card({ children, style = {} }: CardProps) {
   return (
-    <div style={{ background: T.sur, borderRadius: 18, boxShadow: T.shad, padding: "20px 24px", ...style }}>
+    <div style={{
+      background: "#FFFFFF",
+      borderRadius: 14,
+      boxShadow: "0 2px 14px rgba(0,0,0,.06)",
+      padding: "16px 18px",
+      ...style,
+    }}>
       {children}
     </div>
   );
