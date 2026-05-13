@@ -70,33 +70,6 @@ export default function Home() {
         {/* ── Left: main content ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", background: T.bg }}>
 
-          {/* Phase tab pills */}
-          {donePh.length > 0 && (
-            <div style={{ background: T.bg, padding: "10px 18px 0", display: "flex", gap: 4, flexShrink: 0, overflowX: "auto" }}>
-              {donePh.map(ph => (
-                <button
-                  key={ph.key}
-                  onClick={() => ms.setActiveTab(ph.key)}
-                  style={{
-                    padding: "6px 13px", fontSize: 11, fontWeight: 600,
-                    color: ms.activeTab === ph.key ? "#fff" : T.t2,
-                    background: ms.activeTab === ph.key ? T.pa : "rgba(0,0,0,.07)",
-                    borderWidth: 0, borderRadius: 20, cursor: "pointer",
-                    whiteSpace: "nowrap", fontFamily: "inherit", transition: "all .15s",
-                  }}
-                >
-                  {ph.label}
-                </button>
-              ))}
-              {ms.running && activePhaseLabel && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", color: T.t3, fontSize: 11, padding: "0 6px" }}>
-                  <div style={{ width: 9, height: 9, border: "2px solid rgba(0,0,0,.08)", borderTopColor: T.pa, borderRadius: "50%", animation: "spin .6s linear infinite" }} />
-                  {AGENTS[activePhaseLabel]?.label}
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Scrollable content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "12px 18px 28px" }}>
 

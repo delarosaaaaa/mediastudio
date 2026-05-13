@@ -10,13 +10,26 @@ import type { BudgetData } from "@/lib/types";
 
 interface Props { d: BudgetData; raw: string; }
 
-function phColor(ph: string): string {
-  const s = (ph || "").toLowerCase();
-  if (s.includes("burst") || s.includes("launch")) return T.p1;
-  if (s.includes("peak") || s.includes("piek") || s.includes("transitie") || s.includes("seizoen")) return T.p2;
-  if (s.includes("wind") || s.includes("afbouw") || s.includes("final") || s.includes("eind")) return T.p4;
-  return T.p3;
+// Assign funnel stage to each pacing week based on stage_split field or phase name
+function getStageSplit(week: { stage_split?: Record<string, number>; phase?: string }): Record<string, number> {
+  // Use AI-provided stage_split if present and valid
+  if (week.stage_split) {
+    const total = Object.values(week.stage_split).reduce((a, b) => a + b, 0);
+    if (total > 0.9 && total < 1.1) return week.stage_split;
+  }
+  // Fallback: infer from phase name
+  const p = (week.phase || "").toLowerCase();
+  if (p.includes("burst") || p.includes("launch")) return { awareness: 0.65, consideration: 0.20, conversion: 0.10, retention: 0.05 };
+  if (p.includes("peak") || p.includes("piek"))    return { awareness: 0.30, consideration: 0.35, conversion: 0.25, retention: 0.10 };
+  return { awareness: 0.15, consideration: 0.25, conversion: 0.40, retention: 0.20 };
 }
+
+const STAGE_COLS: Record<string, string> = {
+  awareness:     T.p1,
+  consideration: T.p2,
+  conversion:    T.p3,
+  retention:     T.p5,
+};
 
 export function SecBudget({ d, raw }: Props) {
   const [selWeek, setSelWeek] = useState<number | null>(null);
@@ -29,6 +42,7 @@ export function SecBudget({ d, raw }: Props) {
   );
 
   const maxW = Math.max(...weeks.map(w => w.budget || 0), 1);
+  const BAR_HEIGHT = 100;
   const selW = selWeek !== null ? weeks[selWeek] : null;
 
   return (
@@ -40,6 +54,7 @@ export function SecBudget({ d, raw }: Props) {
         <KpiCard label="Channels"      value={byChannel.length || "—"} />
       </div>
 
+      {/* Budget by funnel stage */}
       {byFunnel.length > 0 && (
         <Card>
           <SectionTitle a="Budget" b="by funnel stage" />
@@ -61,6 +76,7 @@ export function SecBudget({ d, raw }: Props) {
         </Card>
       )}
 
+      {/* Budget by channel stacked bar */}
       {byChannel.length > 0 && (
         <Card>
           <SectionTitle a="Budget" b="by channel" />
@@ -89,27 +105,56 @@ export function SecBudget({ d, raw }: Props) {
         </Card>
       )}
 
+      {/* Pacing — stacked bars per week per funnel stage (option B) */}
       {weeks.length > 0 && (
         <Card>
           <SectionTitle a="Pacing" b={`— ${d.pacing?.strategy || ""}`} sub={d.pacing?.motivation} />
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 90, marginBottom: 8 }}>
+
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: BAR_HEIGHT, marginBottom: 8, paddingTop: 4 }}>
             {weeks.map((w, i) => {
-              const barH     = Math.max(Math.round((w.budget / maxW) * 90), 4);
+              const weights = getStageSplit(w);
+              const totalH  = Math.max(Math.round(((w.budget || 0) / maxW) * BAR_HEIGHT), 4);
               const isSelected = selWeek === i;
+              const segments = [
+                { key: "awareness",     h: Math.round(weights.awareness     * totalH) },
+                { key: "consideration", h: Math.round(weights.consideration * totalH) },
+                { key: "conversion",    h: Math.round(weights.conversion    * totalH) },
+                { key: "retention",     h: Math.round(weights.retention     * totalH) },
+              ].filter(s => s.h > 0);
+
+              // Ensure total matches due to rounding
+              const diff = totalH - segments.reduce((a, s) => a + s.h, 0);
+              if (segments.length > 0) segments[0].h += diff;
+
               return (
                 <div
                   key={i}
                   onClick={() => setSelWeek(selWeek === i ? null : i)}
-                  style={{ flex: 1, height: `${barH}px`, borderRadius: "4px 4px 0 0", background: phColor(w.phase || ""), cursor: "pointer", boxShadow: isSelected ? `0 0 0 2px ${T.t1}` : "none", transition: "opacity .15s, box-shadow .1s", opacity: selWeek !== null && !isSelected ? 0.4 : 1 }}
-                />
+                  style={{
+                    flex: 1, height: `${totalH}px`, display: "flex", flexDirection: "column-reverse",
+                    cursor: "pointer", borderRadius: "4px 4px 0 0", overflow: "hidden",
+                    boxShadow: isSelected ? `0 0 0 2px ${T.t1}` : "none",
+                    opacity: selWeek !== null && !isSelected ? 0.45 : 1,
+                    transition: "opacity .15s, box-shadow .1s",
+                  }}
+                >
+                  {segments.map((seg, si) => (
+                    <div
+                      key={seg.key}
+                      style={{ height: `${seg.h}px`, background: STAGE_COLS[seg.key], flexShrink: 0 }}
+                    />
+                  ))}
+                </div>
               );
             })}
           </div>
+
           <div style={{ display: "flex", justifyContent: "space-between", ...TY.label, marginBottom: 10 }}>
             <span>Week 1</span><span>Week {weeks.length}</span>
           </div>
+
           {selW ? (
-            <div style={{ background: T.p6, borderRadius: 10, padding: "12px 16px", borderLeft: `3px solid ${T.pa}`, marginBottom: 10 }}>
+            <div style={{ background: T.p6, borderRadius: 10, padding: "12px 16px", borderLeft: `3px solid ${T.pa}`, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
                 <div style={{ ...TY.bodySm, fontWeight: 700, color: T.pa }}>Week {selW.week}</div>
                 <div style={{ ...TY.bodySm, fontWeight: 600, color: T.p2 }}>{selW.phase}</div>
@@ -118,19 +163,21 @@ export function SecBudget({ d, raw }: Props) {
               <div style={{ ...TY.bodyMd }}>{selW.focus}</div>
             </div>
           ) : (
-            <div style={{ ...TY.label, textAlign: "center", padding: "6px 0" }}>Click a week for details</div>
+            <div style={{ ...TY.label, textAlign: "center", padding: "6px 0", marginBottom: 6 }}>Click a week for details</div>
           )}
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {[...new Set(weeks.map(w => w.phase || ""))].filter(Boolean).map((ph, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <div style={{ width: 9, height: 9, borderRadius: "50%", background: phColor(ph) }} />
-                <span style={{ ...TY.bodySm }}>{ph}</span>
+
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {Object.entries(STAGE_COLS).map(([stage, col]) => (
+              <div key={stage} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: col }} />
+                <span style={{ ...TY.bodySm, textTransform: "capitalize" }}>{stage}</span>
               </div>
             ))}
           </div>
         </Card>
       )}
 
+      {/* Channel detail table */}
       {byChannel.length > 0 && (
         <Card>
           <SectionTitle a="Channel" b="budget detail" />

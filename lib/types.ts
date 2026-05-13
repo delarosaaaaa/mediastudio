@@ -135,10 +135,11 @@ export interface BudgetChannel {
 }
 
 export interface PacingWeek {
-  week:   number;
-  budget: number;
-  phase:  string;
-  focus:  string;
+  week:         number;
+  budget:       number;
+  phase:        string;
+  focus:        string;
+  stage_split?: { awareness?: number; consideration?: number; conversion?: number; retention?: number };
 }
 
 export interface BudgetData {
