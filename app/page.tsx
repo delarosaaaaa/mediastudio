@@ -14,6 +14,7 @@ import { SecChannel }     from "@/components/sections/SecChannel";
 import { SecBudget }      from "@/components/sections/SecBudget";
 import { SecMediaplan }   from "@/components/sections/SecMediaplan";
 import { SecSynthesis }   from "@/components/sections/SecSynthesis";
+import { ExportPDF } from "@/components/ui/ExportPDF";
 import type { PhaseKey, SectionData } from "@/lib/types";
 import type { ComponentType } from "react";
 
@@ -147,13 +148,18 @@ export default function Home() {
             {ms.activeTab && Renderer && ms.parsed[ms.activeTab] && (
               <div style={{ animation: "fadeIn .3s ease" }}>
                 {/* Section header */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, color: T.pa, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 3 }}>
-                    {String(PHASES.findIndex(p => p.key === ms.activeTab) + 1).padStart(2, "0")} — {AGENTS[PHASES.find(p => p.key === ms.activeTab)!.agent].label.toUpperCase()}
+                <div style={{ marginBottom: 16, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: T.pa, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 3 }}>
+                      {String(PHASES.findIndex(p => p.key === ms.activeTab) + 1).padStart(2, "0")} — {AGENTS[PHASES.find(p => p.key === ms.activeTab)!.agent].label.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: T.t1, letterSpacing: "-.3px" }}>
+                      {SEC_TITLES[ms.activeTab]}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: T.t1, letterSpacing: "-.3px" }}>
-                    {SEC_TITLES[ms.activeTab]}
-                  </div>
+                  {ms.activeTab === "synthesis" && ms.done && (
+                    <ExportPDF outputs={ms.outputs} parsed={ms.parsed as Record<string, SectionData | null>} />
+                  )}
                 </div>
                 <ErrorBoundary key={ms.activeTab}>
                   <Renderer d={ms.parsed[ms.activeTab] as SectionData} raw={ms.outputs[ms.activeTab] || ""} />
