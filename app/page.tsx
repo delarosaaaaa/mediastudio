@@ -7,29 +7,8 @@ import { TopNav } from "@/components/layout/TopNav";
 import { RightPanel } from "@/components/layout/RightPanel";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { ExportPDF } from "@/components/ui/ExportPDF";
-import { SecBriefing }    from "@/components/sections/SecBriefing";
-import { SecAudience }    from "@/components/sections/SecAudience";
-import { SecMarket }      from "@/components/sections/SecMarket";
-import { SecCompetitive } from "@/components/sections/SecCompetitive";
-import { SecStrategy }    from "@/components/sections/SecStrategy";
-import { SecBudget }      from "@/components/sections/SecBudget";
-import { SecMediaplan }   from "@/components/sections/SecMediaplan";
-import { SecSynthesis }   from "@/components/sections/SecSynthesis";
+import { RENDERERS } from "@/lib/renderers";
 import type { PhaseKey, SectionData } from "@/lib/types";
-import type { ComponentType } from "react";
-
-type SectionProps = { d: SectionData; raw: string };
-
-const RENDERERS: Record<PhaseKey, ComponentType<SectionProps>> = {
-  briefing:    SecBriefing    as ComponentType<SectionProps>,
-  audience:    SecAudience    as ComponentType<SectionProps>,
-  market:      SecMarket      as ComponentType<SectionProps>,
-  competitive: SecCompetitive as ComponentType<SectionProps>,
-  strategy:    SecStrategy    as ComponentType<SectionProps>,
-  budget:      SecBudget      as ComponentType<SectionProps>,
-  mediaplan:   SecMediaplan   as ComponentType<SectionProps>,
-  synthesis:   SecSynthesis   as ComponentType<SectionProps>,
-};
 
 const AGENT_DESCS: Record<string, string> = {
   briefing:    "Goals & KPIs",
