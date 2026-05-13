@@ -10,14 +10,11 @@ import type { BudgetData } from "@/lib/types";
 
 interface Props { d: BudgetData; raw: string; }
 
-// Assign funnel stage to each pacing week based on stage_split field or phase name
 function getStageSplit(week: { stage_split?: Record<string, number>; phase?: string }): Record<string, number> {
-  // Use AI-provided stage_split if present and valid
   if (week.stage_split) {
     const total = Object.values(week.stage_split).reduce((a, b) => a + b, 0);
     if (total > 0.9 && total < 1.1) return week.stage_split;
   }
-  // Fallback: infer from phase name
   const p = (week.phase || "").toLowerCase();
   if (p.includes("burst") || p.includes("launch")) return { awareness: 0.65, consideration: 0.20, conversion: 0.10, retention: 0.05 };
   if (p.includes("peak") || p.includes("piek"))    return { awareness: 0.30, consideration: 0.35, conversion: 0.25, retention: 0.10 };
@@ -32,7 +29,9 @@ const STAGE_COLS: Record<string, string> = {
 };
 
 export function SecBudget({ d, raw }: Props) {
-  const [selWeek, setSelWeek] = useState<number | null>(null);
+  const [selWeek,   setSelWeek]   = useState<number | null>(null);
+  const [budgetTab, setBudgetTab] = useState<"channel" | "funnel">("channel");
+
   const byChannel = d.by_channel || [];
   const byFunnel  = d.by_funnel  || [];
   const weeks     = d.pacing?.weeks || [];
@@ -41,88 +40,116 @@ export function SecBudget({ d, raw }: Props) {
     <Card><div style={{ ...TY.bodyMd, color: T.t3, textAlign: "center", padding: 28 }}>No budget data — please retry.</div></Card>
   );
 
-  const maxW = Math.max(...weeks.map(w => w.budget || 0), 1);
+  const maxW      = Math.max(...weeks.map(w => w.budget || 0), 1);
   const BAR_HEIGHT = 100;
-  const selW = selWeek !== null ? weeks[selWeek] : null;
+  const selW      = selWeek !== null ? weeks[selWeek] : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+      {/* KPI summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
-        <KpiCard label="Total budget"  value={fmtK(d.total_budget)} />
-        <KpiCard label="Net budget"    value={fmtK(d.net_budget)} />
-        <KpiCard label="Test budget"   value={fmtK(d.test_budget?.amount)} sub={`${d.test_budget?.pct || 10}%`} />
-        <KpiCard label="Channels"      value={byChannel.length || "—"} />
+        <KpiCard label="Total budget" value={fmtK(d.total_budget)} />
+        <KpiCard label="Net budget"   value={fmtK(d.net_budget)} />
+        <KpiCard label="Test budget"  value={fmtK(d.test_budget?.amount)} sub={`${d.test_budget?.pct || 10}%`} />
+        <KpiCard label="Channels"     value={byChannel.length || "—"} />
       </div>
 
-      {/* Budget by funnel stage */}
-      {byFunnel.length > 0 && (
-        <Card>
-          <SectionTitle a="Budget" b="by funnel stage" />
-          {byFunnel.map((f, i) => {
-            const maxB = Math.max(...byFunnel.map(x => x.budget || 0), 1);
-            const w    = Math.round(((f.budget || 0) / maxB) * 100);
-            return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <div style={{ ...TY.bodyMd, width: 100, flexShrink: 0 }}>{f.stage}</div>
-                <div style={{ flex: 1, height: 26 }}>
-                  <div style={{ height: "100%", borderRadius: 7, background: [T.p1, T.p2, T.p3, T.p4][i % 4], width: `${w}%`, minWidth: 40, display: "flex", alignItems: "center", padding: "0 10px" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>{fmtK(f.budget || 0)}</span>
+      {/* Tabbed budget breakdown — channel vs funnel */}
+      <Card style={{ padding: 0, overflow: "hidden" }}>
+        {/* Tab header */}
+        <div style={{ display: "flex", borderBottom: `1px solid ${T.s2}` }}>
+          {(["channel", "funnel"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setBudgetTab(tab)}
+              style={{
+                padding: "12px 18px", fontSize: 12, fontWeight: 600,
+                color: budgetTab === tab ? T.pa : T.t3,
+                background: "transparent", borderWidth: 0,
+                borderBottom: `2px solid ${budgetTab === tab ? T.pa : "transparent"}`,
+                cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+              }}
+            >
+              {tab === "channel" ? "By channel" : "By funnel stage"}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ padding: "16px 20px" }}>
+          {budgetTab === "channel" && byChannel.length > 0 && (
+            <div>
+              {/* Column headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 1fr", gap: 8, paddingBottom: 8, borderBottom: `2px solid ${T.s2}`, marginBottom: 4 }}>
+                <div style={{ ...TY.cardLabel }}>Channel</div>
+                <div style={{ ...TY.cardLabel, textAlign: "right" }}>Budget</div>
+                <div style={{ ...TY.cardLabel, paddingLeft: 8 }}>Share</div>
+              </div>
+              {byChannel.map((c, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 70px 1fr", gap: 8, alignItems: "center", padding: "9px 0", borderBottom: `1px solid ${T.s2}` }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.t1 }}>{c.channel || "—"}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.pa, textAlign: "right" }}>{fmtK(c.budget)}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 8 }}>
+                    <div style={{ flex: 1, height: 5, background: T.s2, borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.min(c.pct || 0, 100)}%`, height: "100%", background: T.p2, borderRadius: 3 }} />
+                    </div>
+                    <span style={{ ...TY.bodySm, width: 28, textAlign: "right" }}>{c.pct || 0}%</span>
                   </div>
                 </div>
-                <span style={{ ...TY.label, width: 30, textAlign: "right", flexShrink: 0 }}>{f.pct || 0}%</span>
-              </div>
-            );
-          })}
-        </Card>
-      )}
-
-      {/* Budget by channel stacked bar */}
-      {byChannel.length > 0 && (
-        <Card>
-          <SectionTitle a="Budget" b="by channel" />
-          <div style={{ display: "flex", height: 32, borderRadius: 8, overflow: "hidden", marginBottom: 10 }}>
-            {byChannel.map((c, i) => {
-              const cols = [T.p1, T.p2, T.p3, T.p5, "#D8B4FE"] as const;
-              return (
-                <div key={i} style={{ width: `${c.pct || 0}%`, background: cols[i % cols.length], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: i < 3 ? "#fff" : T.p1, overflow: "hidden" }}>
-                  {(c.pct || 0) > 8 ? `${c.pct}%` : ""}
+              ))}
+              {/* Rationale row */}
+              {byChannel.some(c => c.motivation) && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ ...TY.cardLabel, marginBottom: 8 }}>Rationale</div>
+                  {byChannel.map((c, i) => c.motivation ? (
+                    <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
+                      <div style={{ ...TY.bodySm, fontWeight: 600, color: T.t1, width: 120, flexShrink: 0 }}>{c.channel}</div>
+                      <div style={{ ...TY.bodySm, color: T.t3 }}>{c.motivation}</div>
+                    </div>
+                  ) : null)}
                 </div>
-              );
-            })}
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {byChannel.map((c, i) => {
-              const cols = [T.p1, T.p2, T.p3, T.p5, "#D8B4FE"] as const;
-              return (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 9, height: 9, borderRadius: 2, background: cols[i % cols.length] }} />
-                  <span style={{ ...TY.bodySm }}>{c.channel}</span>
-                  <span style={{ ...TY.bodySm, fontWeight: 600, color: T.t1 }}>{fmtK(c.budget)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
+              )}
+            </div>
+          )}
 
-      {/* Pacing — stacked bars per week per funnel stage (option B) */}
+          {budgetTab === "funnel" && byFunnel.length > 0 && (
+            <div>
+              {byFunnel.map((f, i) => {
+                const maxB = Math.max(...byFunnel.map(x => x.budget || 0), 1);
+                const w    = Math.round(((f.budget || 0) / maxB) * 100);
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                    <div style={{ ...TY.bodyMd, width: 110, flexShrink: 0 }}>{f.stage}</div>
+                    <div style={{ flex: 1, height: 28 }}>
+                      <div style={{ height: "100%", borderRadius: 7, background: [T.p1, T.p2, T.p3, T.p4][i % 4], width: `${w}%`, minWidth: 40, display: "flex", alignItems: "center", padding: "0 12px" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>{fmtK(f.budget || 0)}</span>
+                      </div>
+                    </div>
+                    <span style={{ ...TY.label, width: 30, textAlign: "right", flexShrink: 0 }}>{f.pct || 0}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Pacing — stacked bars per week per funnel stage */}
       {weeks.length > 0 && (
         <Card>
           <SectionTitle a="Pacing" b={`— ${d.pacing?.strategy || ""}`} sub={d.pacing?.motivation} />
 
           <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: BAR_HEIGHT, marginBottom: 8, paddingTop: 4 }}>
             {weeks.map((w, i) => {
-              const weights = getStageSplit(w);
-              const totalH  = Math.max(Math.round(((w.budget || 0) / maxW) * BAR_HEIGHT), 4);
+              const weights    = getStageSplit(w);
+              const totalH     = Math.max(Math.round(((w.budget || 0) / maxW) * BAR_HEIGHT), 4);
               const isSelected = selWeek === i;
-              const segments = [
+              const segments   = [
                 { key: "awareness",     h: Math.round(weights.awareness     * totalH) },
                 { key: "consideration", h: Math.round(weights.consideration * totalH) },
                 { key: "conversion",    h: Math.round(weights.conversion    * totalH) },
                 { key: "retention",     h: Math.round(weights.retention     * totalH) },
               ].filter(s => s.h > 0);
-
-              // Ensure total matches due to rounding
               const diff = totalH - segments.reduce((a, s) => a + s.h, 0);
               if (segments.length > 0) segments[0].h += diff;
 
@@ -138,11 +165,8 @@ export function SecBudget({ d, raw }: Props) {
                     transition: "opacity .15s, box-shadow .1s",
                   }}
                 >
-                  {segments.map((seg, si) => (
-                    <div
-                      key={seg.key}
-                      style={{ height: `${seg.h}px`, background: STAGE_COLS[seg.key], flexShrink: 0 }}
-                    />
+                  {segments.map(seg => (
+                    <div key={seg.key} style={{ height: `${seg.h}px`, background: STAGE_COLS[seg.key], flexShrink: 0 }} />
                   ))}
                 </div>
               );
@@ -174,39 +198,6 @@ export function SecBudget({ d, raw }: Props) {
               </div>
             ))}
           </div>
-        </Card>
-      )}
-
-      {/* Channel detail table */}
-      {byChannel.length > 0 && (
-        <Card>
-          <SectionTitle a="Channel" b="budget detail" />
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: `2px solid ${T.s2}` }}>
-                {["Channel", "Budget", "Share", "Rationale"].map(h => (
-                  <th key={h} style={{ ...TY.cardLabel, padding: "7px 10px", textAlign: "left" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {byChannel.map((c, i) => (
-                <tr key={i} style={{ borderBottom: `1px solid ${T.s2}` }}>
-                  <td style={{ padding: "10px", fontWeight: 600, color: T.t1, fontSize: 13 }}>{c.channel || "—"}</td>
-                  <td style={{ padding: "10px", fontWeight: 700, color: T.pa, fontSize: 13 }}>{fmtK(c.budget)}</td>
-                  <td style={{ padding: "10px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <div style={{ width: 52, height: 5, background: T.s2, borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ width: `${Math.min(c.pct || 0, 100)}%`, height: "100%", background: `linear-gradient(90deg,${T.p1},${T.p3})` }} />
-                      </div>
-                      <span style={{ ...TY.bodySm }}>{c.pct || 0}%</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "10px", ...TY.bodySm, color: T.t3 }}>{c.motivation || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </Card>
       )}
 

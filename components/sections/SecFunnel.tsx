@@ -20,7 +20,7 @@ export function SecFunnel({ d, raw }: Props) {
             return (
               <div key={i}>
                 {/* Phase row */}
-                <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 100px", borderRadius: 10, overflow: "hidden", border: `1px solid ${col}22` }}>
+                <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 130px", borderRadius: 10, overflow: "hidden", border: `1px solid ${col}22` }}>
                   {/* Phase + goal */}
                   <div style={{ background: col, padding: "14px 14px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{s.name}</div>

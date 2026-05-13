@@ -73,71 +73,104 @@ export default function Home() {
           {/* Scrollable content */}
           <div style={{ flex: 1, overflowY: "auto", padding: "12px 18px 28px" }}>
 
-            {/* ── Welcome / briefing input ── */}
+            {/* ── Welcome / briefing input — split layout ── */}
             {!ms.started && (
-              <div style={{ maxWidth: 560, paddingTop: 24, animation: "fadeIn .4s ease" }}>
-                <div style={{ fontSize: 40, fontWeight: 800, color: T.t1, letterSpacing: "-1.5px", lineHeight: 1.0, marginBottom: 12 }}>
-                  <span style={{ fontWeight: 800 }}>Media</span>
-                  <span style={{ fontWeight: 300 }}>Studio</span>
-                </div>
-                <div style={{ ...TY.bodyLg, color: T.t3, marginBottom: 22, maxWidth: 420 }}>
-                  8 AI agents transform your briefing into a complete media strategy document.
-                </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, padding: "24px 0", animation: "fadeIn .4s ease", height: "100%" }}>
 
-                {/* Phase overview */}
-                <div style={{ display: "flex", alignItems: "center", marginBottom: 20, overflowX: "auto", paddingBottom: 4 }}>
-                  {PHASES.map((ph, i) => (
-                    <div key={ph.key} style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-                      <div style={{ background: "#fff", borderRadius: 11, boxShadow: T.shad, padding: "9px 11px", minWidth: 76, textAlign: "center" }}>
-                        <div style={{ fontSize: 9, fontWeight: 600, color: T.pa, textTransform: "uppercase", letterSpacing: ".05em" }}>{String(i + 1).padStart(2, "0")}</div>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: T.t2, marginTop: 2, lineHeight: 1.3 }}>{ph.label}</div>
-                      </div>
-                      {i < PHASES.length - 1 && <div style={{ width: 16, height: 1, background: "rgba(0,0,0,.12)", margin: "0 1px" }} />}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Sessions */}
-                {ms.sessions.length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ ...TY.cardLabel, marginBottom: 7 }}>Previous strategies</div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {ms.sessions.map(s => (
-                        <button
-                          key={s.id}
-                          onClick={() => ms.loadSession(s)}
-                          style={{ padding: "5px 12px", background: "#fff", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,.12)", borderRadius: 20, fontSize: 11, color: T.t2, cursor: "pointer", fontFamily: "inherit" }}
-                        >
-                          {s.brand} · {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </button>
-                      ))}
-                    </div>
+                {/* Left: title + briefing */}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ fontSize: 40, fontWeight: 800, color: T.t1, letterSpacing: "-1.5px", lineHeight: 1.0, marginBottom: 10 }}>
+                    <span style={{ fontWeight: 800 }}>Media</span>
+                    <span style={{ fontWeight: 300 }}>Studio</span>
                   </div>
-                )}
+                  <div style={{ ...TY.bodyLg, color: T.t3, marginBottom: 24, lineHeight: 1.65 }}>
+                    8 AI agents transform your briefing into a complete media strategy document.
+                  </div>
 
-                {/* Briefing input */}
-                <div style={{ background: "#fff", borderRadius: 14, boxShadow: T.shad, padding: "14px 18px", marginBottom: 11 }}>
-                  <div style={{ ...TY.cardLabel, marginBottom: 7 }}>Briefing</div>
-                  <textarea
-                    value={ms.briefing}
-                    onChange={e => ms.setBriefing(e.target.value)}
-                    placeholder="E.g. 'We are launching a new checking account. Target: men 25–35, Amsterdam. Budget €2M for 2026. Goal: max CPO €45 + brand awareness...'"
-                    style={{ width: "100%", minHeight: 110, background: "transparent", borderWidth: 0, fontFamily: "inherit", fontSize: 13, lineHeight: 1.75, color: T.t1, resize: "vertical" }}
-                  />
+                  {/* Sessions */}
+                  {ms.sessions.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ ...TY.cardLabel, marginBottom: 7 }}>Previous strategies</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {ms.sessions.map(s => (
+                          <button
+                            key={s.id}
+                            onClick={() => ms.loadSession(s)}
+                            style={{ padding: "5px 12px", background: "#fff", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,.12)", borderRadius: 20, fontSize: 11, color: T.t2, cursor: "pointer", fontFamily: "inherit" }}
+                          >
+                            {s.brand} · {new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Briefing input */}
+                  <div style={{ background: "#fff", borderRadius: 14, boxShadow: T.shad, padding: "16px 20px", marginBottom: 14, flex: 1 }}>
+                    <div style={{ ...TY.cardLabel, color: T.pa, marginBottom: 8 }}>Briefing</div>
+                    <textarea
+                      value={ms.briefing}
+                      onChange={e => ms.setBriefing(e.target.value)}
+                      placeholder="E.g. 'We are launching a new checking account. Target: men 25–35, Amsterdam. Budget €2M for 2026. Goal: max CPO €45 + brand awareness...'"
+                      style={{ width: "100%", minHeight: 130, background: "transparent", borderWidth: 0, fontFamily: "inherit", fontSize: 13, lineHeight: 1.75, color: T.t1, resize: "none" }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={ms.start}
+                    disabled={!ms.briefing.trim()}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 9, padding: "11px 24px",
+                      borderRadius: 9, borderWidth: 0, alignSelf: "flex-start",
+                      background: ms.briefing.trim() ? T.pa : "#CCC",
+                      color: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+                      cursor: ms.briefing.trim() ? "pointer" : "not-allowed", transition: "background .15s",
+                    }}
+                  >
+                    Start media strategy →
+                  </button>
                 </div>
-                <button
-                  onClick={ms.start}
-                  disabled={!ms.briefing.trim()}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 9, padding: "10px 22px",
-                    borderRadius: 9, borderWidth: 0,
-                    background: ms.briefing.trim() ? T.pa : "#CCC",
-                    color: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600,
-                    cursor: ms.briefing.trim() ? "pointer" : "not-allowed", transition: "background .15s",
-                  }}
-                >
-                  Start media strategy →
-                </button>
+
+                {/* Right: 8 agent cards 2×4 grid */}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ ...TY.cardLabel, marginBottom: 12 }}>8 agents</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {PHASES.map((ph, i) => {
+                      const isLast = i === PHASES.length - 1;
+                      const descriptions: Record<string, string> = {
+                        briefing:    "Extracts goals & KPIs",
+                        audience:    "3 detailed personas",
+                        competitive: "SOV & market gaps",
+                        funnel:      "Customer journey",
+                        channel:     "Overlap & synergy",
+                        budget:      "Allocation & pacing",
+                        mediaplan:   "Full channel plan",
+                        synthesis:   "Strategy summary",
+                      };
+                      return (
+                        <div
+                          key={ph.key}
+                          style={{
+                            background: isLast ? T.p1 : T.s2,
+                            borderRadius: 10,
+                            padding: "12px 14px",
+                          }}
+                        >
+                          <div style={{ fontSize: 9, fontWeight: 600, color: isLast ? T.p4 : T.pa, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 4 }}>
+                            {String(i + 1).padStart(2, "0")}
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: isLast ? "#fff" : T.t1, marginBottom: 3 }}>
+                            {ph.label}
+                          </div>
+                          <div style={{ fontSize: 11, color: isLast ? "rgba(255,255,255,.5)" : T.t3, lineHeight: 1.4 }}>
+                            {descriptions[ph.key]}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
               </div>
             )}
 
