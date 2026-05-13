@@ -219,3 +219,13 @@ export interface Session {
 }
 
 export type FeedbackRating = "good" | "improve" | "bad";
+
+export interface FeedbackEntry {
+  id:            string;
+  timestamp:     string;
+  phase:         PhaseKey;
+  rating:        FeedbackRating;
+  comment:       string;
+  outputSnippet: string;
+  promptVersion: string;
+}
