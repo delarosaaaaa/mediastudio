@@ -14,16 +14,17 @@ export const T = {
   p5:   "#C4B5FD",
   p6:   "#EDE9FE",
   pa:   "#6D28D9",
-  shad: "0 2px 16px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04)",
+  shad: "0 1px 3px rgba(0,0,0,.06)",
 } as const;
 
 export const TY = {
-  sectionTitle: { fontSize: 18, fontWeight: 700, color: T.t1, marginBottom: 16 },
-  cardLabel:    { fontSize: 10, fontWeight: 600, color: T.t3, textTransform: "uppercase" as const, letterSpacing: ".05em", marginBottom: 4 },
-  bodyLg:       { fontSize: 13, color: T.t2, lineHeight: 1.65 },
-  bodyMd:       { fontSize: 12, color: T.t2, lineHeight: 1.6 },
-  bodySm:       { fontSize: 11, color: T.t2, lineHeight: 1.55 },
-  label:        { fontSize: 10, color: T.t3, fontWeight: 500 },
-  num:          { fontSize: 17, fontWeight: 700, color: T.t1, letterSpacing: "-.02em" },
-  numLg:        { fontSize: 22, fontWeight: 800, color: T.t1, letterSpacing: "-.03em", lineHeight: 1 },
+  cardLabel:  { fontSize: 9,  fontWeight: 600, color: T.t3, textTransform: "uppercase" as const, letterSpacing: ".06em", marginBottom: 4 },
+  bodyLg:     { fontSize: 13, color: T.t2, lineHeight: 1.65 },
+  bodyMd:     { fontSize: 12, color: T.t2, lineHeight: 1.6 },
+  bodySm:     { fontSize: 11, color: T.t2, lineHeight: 1.55 },
+  label:      { fontSize: 10, color: T.t3, fontWeight: 500 },
+  num:        { fontSize: 16, fontWeight: 700, color: T.t1, letterSpacing: "-.02em", lineHeight: 1 },
 } as const;
+
+// Shared section header used in every section
+export const secHeader = (num: string, agent: string, title: string) => ({ num, agent, title });
