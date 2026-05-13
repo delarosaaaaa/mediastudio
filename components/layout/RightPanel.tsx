@@ -62,7 +62,7 @@ export function RightPanel({ outputs, activePhase, messages, questions, answer, 
       {/* Chat feed */}
       <div ref={feedRef} style={{ flex: 1, overflowY: "auto", padding: "10px 12px", display: "flex", flexDirection: "column", gap: 7 }}>
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", color: "rgba(0,0,0,.2)", ...TY.bodySm, padding: "18px 0", lineHeight: 1.9 }}>
+          <div style={{ ...TY.bodySm, textAlign: "center", color: "rgba(0,0,0,.2)", padding: "18px 0", lineHeight: 1.9 }}>
             Agent messages<br />appear here
           </div>
         )}

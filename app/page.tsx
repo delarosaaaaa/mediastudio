@@ -55,6 +55,16 @@ export default function Home() {
         onShowReport={() => ms.setActiveTab("synthesis")}
       />
 
+      {/* Demo mode banner — shown when no API key is set */}
+      {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+        <div style={{ background: "#FEF3C7", borderBottom: "1px solid #FDE68A", padding: "7px 20px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: 13 }}>🧪</span>
+          <span style={{ fontSize: 12, color: "#92400E", fontWeight: 500 }}>
+            Demo mode — showing example data for a fictional brand called Vault. Add your <strong>ANTHROPIC_API_KEY</strong> in Vercel to use real AI.
+          </span>
+        </div>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 296px", flex: 1, overflow: "hidden" }}>
 
         {/* ── Left: main content ── */}
