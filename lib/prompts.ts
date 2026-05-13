@@ -4,9 +4,9 @@ import type { PhaseKey } from "./types";
 export const PROMPT_VERSIONS: Record<PhaseKey, string> = {
   briefing:    "v1",
   audience:    "v1",
+  market:      "v1",
   competitive: "v1",
-  funnel:      "v1",
-  channel:     "v1",
+  strategy:    "v1",
   budget:      "v1",
   mediaplan:   "v1",
   synthesis:   "v1",
@@ -61,15 +61,24 @@ Provide 3–4 competitors. recent_ads are based on publicly known recent campaig
 CONTEXT: ${briefing}
 ${ctx}`,
 
-  funnel: (briefing, ctx) => `You are a media funnel strategist. Respond ONLY in JSON:
+  market: (briefing, ctx) => `You are a market analyst. Respond ONLY in JSON:
 
-{"stages":[{"name":"","goal":"","channels":["",""],"kpi":"","target":"","message_type":"","budget_pct":0,"conversion_rate":""}],"retargeting":["",""],"budget_split":[{"stage":"","pct":0}]}
+{"tam":"€2.4B","sam":"€380M","target_size":"~280,000 users","growth":"+18% YoY","segments":[{"name":"Urban professionals","pct":42},{"name":"Freelancers / ZZP","pct":31},{"name":"Students / starters","pct":27}],"trends":[{"direction":"up","title":"Mobile-first banking accelerating","description":"stat or insight"},{"direction":"up","title":"Fee sensitivity rising","description":"stat or insight"},{"direction":"down","title":"Trust in incumbents declining","description":"stat or insight"}],"opportunities":[{"title":"Gap title","description":"detailed explanation"},{"title":"Gap title","description":"detailed explanation"},{"title":"Gap title","description":"detailed explanation"}],"positioning_space":"1-2 sentence positioning opportunity for the brand"}
 
-Provide 3–4 funnel stages.
+direction must be: up, down, or neutral. Provide 3 trends and 3 opportunities specific to the brand's market.
 CONTEXT: ${briefing}
 ${ctx}`,
 
-  channel: (briefing, ctx) => `You are a channel strategy expert. Respond ONLY in JSON using EXACTLY these field names:
+  strategy: (briefing, ctx) => `You are a media strategy expert combining funnel planning and channel strategy. Respond ONLY in JSON:
+
+{"stages":[{"name":"Awareness","goal":"goal","channels":["YouTube Pre-roll","Meta Video"],"kpi":"Impressions / Aided Awareness","target":"42M impressions · 40% awareness","message_type":"Emotional brand story","budget_pct":40,"conversion_rate":"4.2% click-through"},{"name":"Consideration","goal":"goal","channels":["Google Search","Meta Carousel"],"kpi":"Website visits","target":"180K visits","message_type":"Rational comparison","budget_pct":30,"conversion_rate":"28% to download"},{"name":"Conversion","goal":"goal","channels":["Google Search brand","Meta Retargeting"],"kpi":"Account openings / CPA","target":"44,000 accounts · CPA ≤ €45","message_type":"Urgency + social proof","budget_pct":22,"conversion_rate":"46% complete onboarding"},{"name":"Retention","goal":"goal","channels":["Push","Email"],"kpi":"Activation / 30-day retention","target":"75% activation","message_type":"Onboarding tips","budget_pct":8,"conversion_rate":""}],"retargeting":["retargeting rule 1","retargeting rule 2","retargeting rule 3"],"channels":[{"name":"YouTube Pre-roll","role":"awareness","motivation":"why this channel","targeting":"audience","formats":["Non-skippable 15s","Bumper 6s"],"always_on":false,"reach_index":88,"selectivity_index":60,"score_label":"●●●●○"},{"name":"Meta Social","role":"consideration","motivation":"why","targeting":"audience","formats":["Reels 15s","Stories"],"always_on":true,"reach_index":85,"selectivity_index":78,"score_label":"●●●●●"},{"name":"Google Search","role":"conversion","motivation":"why","targeting":"keywords","formats":["Responsive Search Ads"],"always_on":true,"reach_index":52,"selectivity_index":94,"score_label":"●●●●●"}],"channel_overlap":[{"channels":["YouTube Pre-roll","Meta Social","Spotify"],"overlap_pct":44,"insight":"awareness overlap insight"},{"channels":["Google Search","Programmatic Display"],"overlap_pct":28,"insight":"consideration overlap insight"},{"channels":["Google Search brand","Meta Retargeting"],"overlap_pct":62,"insight":"conversion overlap insight"},{"channels":["Push","Email","In-app"],"overlap_pct":85,"insight":"retention overlap insight"}],"synergy_score":82,"synergy_notes":"explain overall channel synergy"}
+
+IMPORTANT:
+- role must be exactly: awareness, consideration, conversion, or retention
+- channel_overlap must have 4 entries, one per funnel phase
+- Minimum 5 channels
+CONTEXT: ${briefing}
+${ctx}`,
 
 {"channels":[{"name":"YouTube Pre-roll","role":"awareness","motivation":"explain why","targeting":"audience description","formats":["Video 15s","Video 30s"],"always_on":true,"reach_index":85,"selectivity_index":62,"score_label":"●●●●○"},{"name":"Meta Social","role":"consideration","motivation":"explain why","targeting":"audience","formats":["Feed","Stories"],"always_on":false,"reach_index":78,"selectivity_index":75,"score_label":"●●●●○"},{"name":"Google Search","role":"conversion","motivation":"explain why","targeting":"audience","formats":["Text ads"],"always_on":true,"reach_index":55,"selectivity_index":92,"score_label":"●●●●●"},{"name":"Email + Push","role":"retention","motivation":"explain why","targeting":"existing users","formats":["Email","Push notification"],"always_on":true,"reach_index":90,"selectivity_index":95,"score_label":"●●●●●"}],"channel_overlap":[{"channels":["YouTube Pre-roll","Meta Social","Spotify"],"overlap_pct":44,"insight":"explain awareness channel overlap"},{"channels":["Google Search","Programmatic Display","LinkedIn"],"overlap_pct":28,"insight":"explain consideration channel overlap"},{"channels":["Google Search brand","Meta Retargeting"],"overlap_pct":62,"insight":"explain conversion channel overlap"},{"channels":["Email","Push","In-app"],"overlap_pct":85,"insight":"explain retention channel overlap"}],"attribution_model":"last-click","frequency_cap":"3x/week","synergy_score":78,"synergy_notes":"explain overall synergy"}
 

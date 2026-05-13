@@ -4,8 +4,8 @@ import { DEMO_DATA } from "@/lib/demo-data";
 import type { PhaseKey } from "@/lib/types";
 
 const PHASE_KEYS: PhaseKey[] = [
-  "briefing", "audience", "competitive", "funnel",
-  "channel",  "budget",   "mediaplan",   "synthesis",
+  "briefing", "audience", "market",    "competitive",
+  "strategy", "budget",   "mediaplan", "synthesis",
 ];
 
 const AnalyzeSchema = z.object({

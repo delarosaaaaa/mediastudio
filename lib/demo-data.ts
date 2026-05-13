@@ -25,6 +25,30 @@ export const DEMO_DATA: Record<string, string> = {
     },
   }),
 
+
+  market: JSON.stringify({
+    tam: "€2.4B",
+    sam: "€380M",
+    target_size: "~280,000 users",
+    growth: "+18% YoY",
+    segments: [
+      { name: "Urban professionals", pct: 42 },
+      { name: "Freelancers / ZZP",   pct: 31 },
+      { name: "Students / starters", pct: 27 },
+    ],
+    trends: [
+      { direction: "up",   title: "Mobile-first banking accelerating",  description: "+34% app-only account openings YoY in NL" },
+      { direction: "up",   title: "Fee sensitivity rising post-inflation", description: "62% cite fees as top switching trigger (DNB 2024)" },
+      { direction: "down", title: "Trust in incumbents declining",       description: "NPS for big-4 banks dropped 12 pts in 2 years" },
+    ],
+    opportunities: [
+      { title: "No challenger owns the freelancer positioning",    description: "1.2M ZZP in NL with no dedicated banking champion. Bunq goes broad, Revolut focuses on travellers." },
+      { title: "Dutch-language digital banking content is scarce", description: "Most challengers run English-language ads. Dutch creative outperforms by 23% on recall (Nielsen 2024)." },
+      { title: "Trust gap at the bottom of the funnel",           description: "Competitors focus on acquisition; few invest in safety and deposit guarantee reassurance content." },
+    ],
+    positioning_space: "Zero-fee, full-control digital banking for the Dutch urban professional — in their own language. No competitor owns this space clearly.",
+  }),
+
   audience: JSON.stringify({
     total: {
       name: "Total Audience",
@@ -126,6 +150,37 @@ export const DEMO_DATA: Record<string, string> = {
       { barrier: "Trust — is a new bank safe?", solution: "Lead with DNB licence, deposit guarantee scheme (€100K), and security credentials" },
       { barrier: "Not sure it's worth it for the savings", solution: "Show concrete euro amount saved per year in all ads (personalised calculator)" },
     ],
+  }),
+
+
+  strategy: JSON.stringify({
+    stages: [
+      { name: "Awareness",     goal: "Reach 70% of target audience at least 3 times", channels: ["YouTube Pre-roll", "Meta Video", "Spotify Audio", "Programmatic Display"], kpi: "Impressions / Aided Awareness", target: "42M impressions · 40% awareness", message_type: "Emotional brand story — 'Banking that actually works for you'", budget_pct: 40, conversion_rate: "4.2% click-through to consideration" },
+      { name: "Consideration", goal: "Drive active product comparison and app store visits", channels: ["Google Search", "Meta Carousel", "YouTube TrueView", "LinkedIn"], kpi: "Website visits / App store page views", target: "180,000 website visits · 95,000 app page views", message_type: "Rational comparison — fee savings calculator, feature checklist", budget_pct: 30, conversion_rate: "28% conversion from visit to app download" },
+      { name: "Conversion",    goal: "Drive account sign-ups at ≤ €45 CPA", channels: ["Google Search (brand)", "Meta Retargeting", "App Store Ads"], kpi: "Account openings / CPA", target: "44,000 accounts · CPA ≤ €45", message_type: "Urgency + social proof — 'Join 44,000 people who switched'", budget_pct: 22, conversion_rate: "46% complete onboarding after download" },
+      { name: "Retention",     goal: "Activate accounts and drive first transaction within 7 days", channels: ["Push notifications", "Email", "In-app messages"], kpi: "Activation rate / 30-day retention", target: "75% activation · 60% 30-day retention", message_type: "Onboarding tips + first transaction incentive (€5 cashback)", budget_pct: 8, conversion_rate: "" },
+    ],
+    retargeting: [
+      "Website visitors who did not download the app → Meta + Google Display with fee-saving message (7-day window)",
+      "App downloaders who did not complete sign-up → Push notification series + Meta retargeting (3-day window)",
+      "Completed sign-up but no first transaction → Email + in-app nudge with €5 cashback offer (7-day window)",
+    ],
+    channels: [
+      { name: "YouTube Pre-roll",     role: "awareness",     motivation: "Highest video reach among 25–38 urban professionals. Non-skippable 15s builds rapid brand familiarity.", targeting: "25–38, Amsterdam/Rotterdam/Utrecht, interest: fintech, personal finance", formats: ["Non-skippable 15s", "Bumper 6s"], always_on: false, reach_index: 88, selectivity_index: 60, score_label: "●●●●○" },
+      { name: "Meta Social",          role: "consideration", motivation: "Unmatched targeting precision. Instagram Stories and Reels drive strong brand recall and click-through.", targeting: "25–38, 3 cities, behaviours: mobile banking app users, lookalike of current customer base", formats: ["Reels 15s", "Stories", "Feed carousel"], always_on: true, reach_index: 85, selectivity_index: 78, score_label: "●●●●●" },
+      { name: "Google Search",        role: "conversion",    motivation: "Captures high-intent users. Brand + competitor keywords drive lowest CPA in the mix.", targeting: "Keywords: gratis bankrekening, beste challenger bank, Vault bank", formats: ["Responsive Search Ads"], always_on: true, reach_index: 52, selectivity_index: 94, score_label: "●●●●●" },
+      { name: "Programmatic Display", role: "consideration", motivation: "Cost-efficient retargeting. Keeps Vault top-of-mind for users who engaged with video but haven't converted.", targeting: "Retargeting: video viewers + website visitors (30-day window)", formats: ["300x250", "728x90", "Native"], always_on: false, reach_index: 70, selectivity_index: 65, score_label: "●●●●○" },
+      { name: "Spotify Audio",        role: "awareness",     motivation: "Reaches the audience during commute and gym. Audio + display combo drives 18% higher recall.", targeting: "25–35, urban, playlists: workout, commute, focus work", formats: ["Audio 30s + companion banner"], always_on: false, reach_index: 62, selectivity_index: 55, score_label: "●●●○○" },
+      { name: "LinkedIn",             role: "consideration", motivation: "Targets the freelancer/ZZP segment with precision.", targeting: "Freelancers, self-employed, 26–40, NL", formats: ["Sponsored content", "InMail"], always_on: false, reach_index: 40, selectivity_index: 88, score_label: "●●●○○" },
+    ],
+    channel_overlap: [
+      { channels: ["YouTube Pre-roll", "Meta Social", "Spotify Audio"],     overlap_pct: 44, insight: "YouTube + Meta share the largest overlap. Align creative for a consistent brand story across awareness touchpoints." },
+      { channels: ["Google Search", "Programmatic Display", "LinkedIn"],    overlap_pct: 28, insight: "Low overlap — each channel reaches a distinct segment of the consideration audience." },
+      { channels: ["Google Search (brand)", "Meta Retargeting"],            overlap_pct: 62, insight: "High overlap is intentional — both channels hit the same high-intent user at the purchase moment." },
+      { channels: ["Push notifications", "Email", "In-app messages"],       overlap_pct: 85, insight: "Same user across all retention channels — coordinate timing carefully to avoid message fatigue." },
+    ],
+    synergy_score: 82,
+    synergy_notes: "Strong synergy between YouTube brand building and Google Search conversion. Users exposed to YouTube pre-roll show 2.3× higher Search CTR.",
   }),
 
   competitive: JSON.stringify({

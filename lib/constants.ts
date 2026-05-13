@@ -3,9 +3,9 @@ import type { Phase, PhaseKey } from "./types";
 export const PHASES: Phase[] = [
   { key: "briefing",    label: "Briefing",     agent: "analyst"     },
   { key: "audience",    label: "Audience",     agent: "audience"    },
+  { key: "market",      label: "Market",       agent: "market"      },
   { key: "competitive", label: "Competitive",  agent: "competitive" },
-  { key: "funnel",      label: "Funnel",       agent: "funnel"      },
-  { key: "channel",     label: "Channels",     agent: "channel"     },
+  { key: "strategy",    label: "Strategy",     agent: "strategy"    },
   { key: "budget",      label: "Budget",       agent: "budget"      },
   { key: "mediaplan",   label: "Media Plan",   agent: "mediaplan"   },
   { key: "synthesis",   label: "Final Report", agent: "synthesizer" },
@@ -14,9 +14,9 @@ export const PHASES: Phase[] = [
 export const AGENTS: Record<string, { label: string }> = {
   analyst:     { label: "Briefing Analyst"  },
   audience:    { label: "Audience Agent"    },
+  market:      { label: "Market Agent"      },
   competitive: { label: "Competitive Agent" },
-  funnel:      { label: "Funnel Agent"      },
-  channel:     { label: "Channel Agent"     },
+  strategy:    { label: "Strategy Agent"    },
   budget:      { label: "Budget Agent"      },
   mediaplan:   { label: "Media Planner"     },
   synthesizer: { label: "Synthesizer"       },
@@ -25,10 +25,10 @@ export const AGENTS: Record<string, { label: string }> = {
 export const SEC_TITLES: Record<PhaseKey, string> = {
   briefing:    "Introduction & Objectives",
   audience:    "Audience Analysis",
+  market:      "Market Analysis",
   competitive: "Competitive Analysis",
-  funnel:      "Customer Journey",
-  channel:     "Channel Strategy",
-  budget:      "Budget Allocation",
+  strategy:    "Media Strategy",
+  budget:      "Budget & Pacing",
   mediaplan:   "Media Plan",
   synthesis:   "Final Report",
 };

@@ -1,8 +1,8 @@
 // ─── Phase & Agent types ──────────────────────────────────────
 
 export type PhaseKey =
-  | "briefing" | "audience" | "competitive" | "funnel"
-  | "channel"  | "budget"   | "mediaplan"   | "synthesis";
+  | "briefing" | "audience" | "market"     | "competitive"
+  | "strategy" | "budget"   | "mediaplan"  | "synthesis";
 
 export interface Phase {
   key:   PhaseKey;
