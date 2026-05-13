@@ -80,7 +80,7 @@ export function SecBudget({ d, raw }: Props) {
               return (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                   <div style={{ width: 9, height: 9, borderRadius: 2, background: cols[i % cols.length] }} />
-                  <span style={{ ...TY.bodySm }}>{c.channel || c.name}</span>
+                  <span style={{ ...TY.bodySm }}>{c.channel}</span>
                   <span style={{ ...TY.bodySm, fontWeight: 600, color: T.t1 }}>{fmtK(c.budget)}</span>
                 </div>
               );
@@ -145,7 +145,7 @@ export function SecBudget({ d, raw }: Props) {
             <tbody>
               {byChannel.map((c, i) => (
                 <tr key={i} style={{ borderBottom: `1px solid ${T.s2}` }}>
-                  <td style={{ padding: "10px", fontWeight: 600, color: T.t1, fontSize: 13 }}>{c.channel || c.name || "—"}</td>
+                  <td style={{ padding: "10px", fontWeight: 600, color: T.t1, fontSize: 13 }}>{c.channel || "—"}</td>
                   <td style={{ padding: "10px", fontWeight: 700, color: T.pa, fontSize: 13 }}>{fmtK(c.budget)}</td>
                   <td style={{ padding: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
