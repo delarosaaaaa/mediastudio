@@ -17,9 +17,9 @@ const CARD = { background: T.sur, borderRadius: 14, boxShadow: T.shad, padding: 
 const SEG_COLS = [T.p1, T.p2, T.p3, T.p5];
 
 export function SecMarket({ d, raw }: Props) {
-  const segments     = d.segments     || [];
-  const trends       = d.trends       || [];
-  const opportunities = d.opportunities || [];
+  const segments      = (d.segments      || []) as Array<{ name: string; pct: number }>;
+  const trends        = (d.trends        || []) as Array<{ direction: string; title: string; description: string }>;
+  const opportunities = (d.opportunities || []) as Array<{ title: string; description: string }>;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>

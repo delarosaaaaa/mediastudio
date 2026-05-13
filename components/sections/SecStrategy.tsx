@@ -48,8 +48,9 @@ function VennSVG({ channels, overlap, color }: { channels: Channel[]; overlap: n
 
 function getOverlap(role: string, d: StrategyData, channels: Channel[]): { pct: number; insight: string } {
   const names = channels.map(c => c.name || "");
-  const found = d.channel_overlap?.find(ov =>
-    ov.channels?.some(n => names.some(nm => nm.includes(n) || n.includes(nm)))
+  const overlap = (d.channel_overlap || []) as Array<{ channels: string[]; overlap_pct: number; insight: string }>;
+  const found = overlap.find(ov =>
+    ov.channels?.some((n: string) => names.some(nm => nm.includes(n) || n.includes(nm)))
   );
   if (found) return { pct: found.overlap_pct, insight: found.insight };
   const defaults: Record<string, { pct: number; insight: string }> = {
@@ -62,8 +63,8 @@ function getOverlap(role: string, d: StrategyData, channels: Channel[]): { pct: 
 }
 
 export function SecStrategy({ d, raw }: Props) {
-  const stages   = d.stages   || [];
-  const channels = d.channels || [];
+  const stages   = (d.stages   || []) as Array<{ name: string; goal: string; channels: string[]; kpi: string; target: string; message_type: string; budget_pct: number; conversion_rate: string }>;
+  const channels = (d.channels || []) as Channel[];
   const groups   = groupByRole(channels);
   const activePhases = PHASE_ORDER.filter(p => (groups[p]?.length ?? 0) > 0);
 
