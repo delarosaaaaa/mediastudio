@@ -7,15 +7,18 @@ import type { CSSProperties, ReactNode } from "react";
 import { C, FS } from "@/lib/tokens";
 
 // ─── Card ─────────────────────────────────────────────────────
-interface CardProps { children: ReactNode; style?: CSSProperties; }
-export function Card({ children, style }: CardProps) {
+interface CardProps { children: ReactNode; style?: CSSProperties; fill?: boolean; }
+export function Card({ children, style, fill = false }: CardProps) {
   return (
     <div style={{
       background:   C.white,
       borderRadius: 14,
       boxShadow:    C.shadow,
       padding:      "16px 18px",
-      marginBottom: 9,
+      // flex:1 has no effect when parent is block — only activates inside flex/grid containers
+      // This makes Card automatically fill its Pair column without needing a fill prop
+      flex:         1,
+      marginBottom: fill ? 0 : 9,
       ...style,
     }}>
       {children}
@@ -176,8 +179,8 @@ export function SectionCard({ children, style, flex = true }: SectionCardProps) 
 export function Pair({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch", marginBottom: 10 }}>
-      <div style={{ display: "flex", flexDirection: "column" }}>{left}</div>
-      <div style={{ display: "flex", flexDirection: "column" }}>{right}</div>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>{left}</div>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>{right}</div>
     </div>
   );
 }

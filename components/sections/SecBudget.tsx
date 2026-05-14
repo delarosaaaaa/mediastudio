@@ -35,7 +35,7 @@ function BudgetAllocation({ d }: { d: BudgetData }) {
       left={
         <>
           <SectionLabel>2a — By funnel stage</SectionLabel>
-          <Card>
+          <Card fill>
             {byFunnel.map((f, i) => (
               <BudgetBar
                 key={i}
@@ -59,7 +59,7 @@ function BudgetAllocation({ d }: { d: BudgetData }) {
       right={
         <>
           <SectionLabel>2b — By channel</SectionLabel>
-          <Card>
+          <Card fill>
             {byChannel.map((ch, i) => (
               <BudgetBar
                 key={i}
@@ -97,7 +97,7 @@ function PacingStrategy({ d }: { d: BudgetData }) {
   return (
     <div style={{ marginBottom: 10 }}>
       <SectionLabel>3 — Pacing strategy</SectionLabel>
-      <Card>
+      <Card fill>
         {/* Chart */}
         {weeks.length > 0 && (
           <>
