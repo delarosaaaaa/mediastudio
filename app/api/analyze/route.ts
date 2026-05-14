@@ -34,9 +34,9 @@ function textStream(text: string): Response {
   const enc  = new TextEncoder();
   const body = new ReadableStream({
     async start(ctrl) {
-      for (let i = 0; i < text.length; i += 40) {
-        ctrl.enqueue(enc.encode(text.slice(i, i + 40)));
-        await new Promise(r => setTimeout(r, 12));
+      for (let i = 0; i < text.length; i += 400) {
+        ctrl.enqueue(enc.encode(text.slice(i, i + 400)));
+        await new Promise(r => setTimeout(r, 20));
       }
       ctrl.close();
     },

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { C, FS } from "@/lib/tokens";
 import { PHASES, AGENTS, SEC_TITLES } from "@/lib/constants";
 import { RENDERERS } from "@/lib/renderers";
@@ -16,9 +16,20 @@ export function ExportPDF({ outputs, parsed }: Props) {
   const contentRef = useRef<HTMLDivElement>(null);
   const done = PHASES.filter(ph => !!parsed[ph.key] && !!outputs[ph.key]);
 
-  async function handleExport() {
-    if (!contentRef.current || done.length === 0) return;
-    setExporting(true);
+  // When exporting flips to true, the off-screen div mounts.
+  // useEffect runs after paint, so the div is in DOM and ready for html2canvas.
+  useEffect(() => {
+    if (!exporting) return;
+    doExport();
+  }, [exporting]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleExport() {
+    if (done.length === 0) return;
+    setExporting(true); // triggers re-render → off-screen div mounts → useEffect fires
+  }
+
+  async function doExport() {
+    if (!contentRef.current) return;
     try {
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
         import("jspdf"), import("html2canvas"),
@@ -67,7 +78,8 @@ export function ExportPDF({ outputs, parsed }: Props) {
         }
       </button>
 
-      {/* Off-screen render area */}
+      {/* Off-screen render area — only mounted when export is in progress */}
+      {exporting && (
       <div ref={contentRef} style={{ position: "fixed", top: 0, left: 0, width: 900, visibility: "hidden", pointerEvents: "none", zIndex: -1 }} aria-hidden="true">
         {done.map((ph, i) => {
           const Renderer = RENDERERS[ph.key];
@@ -91,6 +103,7 @@ export function ExportPDF({ outputs, parsed }: Props) {
           );
         })}
       </div>
+      )}
     </div>
   );
 }
