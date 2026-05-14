@@ -1,3 +1,5 @@
+let _msgCounter = 0;
+
 "use client";
 
 import { useState, useRef, useCallback } from "react";
@@ -10,10 +12,25 @@ const SESSION_KEY  = "ms_sessions";
 
 // ─── Session helpers ──────────────────────────────────────────
 
+function isValidSession(s: unknown): s is Session {
+  return (
+    !!s &&
+    typeof s === "object" &&
+    typeof (s as Record<string, unknown>).id        === "string" &&
+    typeof (s as Record<string, unknown>).briefing  === "string" &&
+    typeof (s as Record<string, unknown>).brand     === "string" &&
+    typeof (s as Record<string, unknown>).createdAt === "string" &&
+    typeof (s as Record<string, unknown>).outputs   === "object" &&
+    typeof (s as Record<string, unknown>).parsed    === "object"
+  );
+}
+
 function loadSessions(): Session[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY) || "[]");
+    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) || "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(isValidSession);
   } catch { return []; }
 }
 
@@ -39,7 +56,17 @@ async function callAnalyze(
     const err = await res.text();
     throw new Error(err || `HTTP ${res.status}`);
   }
-  return res.text();
+  // Read stream incrementally instead of buffering with res.text()
+  if (!res.body) return res.text();
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let raw = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    raw += decoder.decode(value, { stream: true });
+  }
+  return raw;
 }
 
 function isRetryable(e: unknown): boolean {
@@ -91,7 +118,7 @@ export function useMediaStudio() {
 
   const addMsg = useCallback((from: string, to: string | null, text: string, type: Message["type"] = "normal") => {
     const ts = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-    setMessages(p => [...p, { from, to, text, type, ts, id: Date.now() + Math.random() }]);
+    setMessages(p => [...p, { from, to, text, type, ts, id: ++_msgCounter }]);
   }, []);
 
   const saveSession = useCallback((brf: string, outs: Record<string, string>, prs: Record<string, SectionData | null>) => {

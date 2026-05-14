@@ -7,7 +7,7 @@ import { RENDERERS } from "@/lib/renderers";
 interface Props {
   outputs: Record<string, string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parsed:  Record<string, any>;
+  parsed:  Record<string, any> | Record<string, unknown>;
 }
 
 export function ExportPDF({ outputs, parsed }: Props) {
@@ -67,7 +67,7 @@ export function ExportPDF({ outputs, parsed }: Props) {
       </button>
 
       {/* Off-screen render area */}
-      <div ref={contentRef} style={{ position: "absolute", left: -9999, top: 0, width: 900, background: C.pageBg, pointerEvents: "none" }} aria-hidden="true">
+      <div ref={contentRef} style={{ position: "fixed", top: 0, left: 0, width: 900, visibility: "hidden", pointerEvents: "none", zIndex: -1 }} aria-hidden="true">
         {done.map((ph, i) => {
           const Renderer = RENDERERS[ph.key];
           if (!Renderer) return null;
@@ -81,7 +81,11 @@ export function ExportPDF({ outputs, parsed }: Props) {
                   {SEC_TITLES[ph.key]}
                 </div>
               </div>
-              <Renderer d={parsed[ph.key]} raw={outputs[ph.key] || ""} />
+              <Renderer
+                d={parsed[ph.key]}
+                raw={outputs[ph.key] || ""}
+                {...(ph.key === "synthesis" ? { outputs, parsed } : {})}
+              />
             </div>
           );
         })}

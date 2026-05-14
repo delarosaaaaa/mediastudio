@@ -152,3 +152,52 @@ export function FeedbackBar({ phase, outputRaw }: { phase: PhaseKey; outputRaw: 
     </div>
   );
 }
+
+// ─── Section layout helpers ───────────────────────────────────
+// Shared across all section components. Import from here — never redefine locally.
+
+interface SectionCardProps { children: React.ReactNode; style?: React.CSSProperties; flex?: boolean; }
+export function SectionCard({ children, style, flex = true }: SectionCardProps) {
+  return (
+    <div style={{
+      background:   C.white,
+      borderRadius: 14,
+      border:       `0.5px solid ${C.border}`,
+      padding:      "14px 16px",
+      ...(flex ? { flex: 1 } : { marginBottom: 9 }),
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+export function Pair({ left, right }: { left: React.ReactNode; right: React.ReactNode }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch", marginBottom: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>{left}</div>
+      <div style={{ display: "flex", flexDirection: "column" }}>{right}</div>
+    </div>
+  );
+}
+
+export function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 8 }}>
+      {children}
+    </div>
+  );
+}
+
+export function BulletItem({ text, color = C.p700 }: { text: string; color?: string }) {
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 7 }}>
+      <div style={{ width: 4, height: 4, borderRadius: "50%", background: color, marginTop: 6, flexShrink: 0 }} />
+      <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{text}</div>
+    </div>
+  );
+}
+
+export function Divider() {
+  return <div style={{ borderTop: `0.5px solid ${C.border}`, margin: "12px 0" }} />;
+}

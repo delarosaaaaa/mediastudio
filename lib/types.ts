@@ -84,11 +84,41 @@ export interface Competitor {
   recent_ads:       RecentAd[];
 }
 
+export interface PositioningBrand {
+  name:       string;
+  x:          number;  // 0-100: Traditional=0, Innovative=100
+  y:          number;  // 0-100: Accessible=0, Premium=100
+  color?:     string;
+}
+
+export interface CreativePattern {
+  label: string;
+  icon:  string;
+}
+
+export interface CompetitorWeakness {
+  name:      string;
+  weakness:  string;
+  color?:    string;
+}
+
+export interface WhiteSpaceItem {
+  label: string;
+}
+
 export interface CompetitiveData {
-  competitors:  Competitor[];
-  sov:          { brand?: string; name?: string; pct: number }[];
-  market_share: { brand?: string; name?: string; pct: number }[];
-  market_gaps:  { title: string; description: string }[];
+  competitors:       Competitor[];
+  sov:               { brand?: string; name?: string; pct: number; insight?: string }[];
+  market_share:      { brand?: string; name?: string; pct: number; insight?: string }[];
+  sov_insight?:      string;
+  market_share_insight?: string;
+  positioning_map?:  PositioningBrand[];
+  positioning_insight?: string;
+  creative_patterns?: CreativePattern[];
+  weaknesses?:       CompetitorWeakness[];
+  market_gaps:       { title: string; description: string }[];
+  white_space?:      WhiteSpaceItem[];
+  white_space_title?: string;
 }
 
 // Market — new section
@@ -96,17 +126,21 @@ export interface MarketSegment  { name: string; pct: number; }
 export interface MarketTrend    { direction: "up" | "down" | "neutral"; title: string; description: string; }
 export interface MarketGap      { title: string; description: string; }
 export interface MarketData {
-  tam?:              string;
-  sam?:              string;
-  target_size?:      string;
-  growth?:           string;
-  segments?:         MarketSegment[];
-  trends?:           MarketTrend[];
-  opportunities?:    MarketGap[];
-  positioning_space?: string;
+  tam?:                   string;
+  sam?:                   string;
+  target_size?:           string;
+  growth?:                string;
+  segments?:              MarketSegment[];
+  trends?:                MarketTrend[];
+  consumer_behaviour?:    string;
+  opportunities?:         MarketGap[];
+  why_now?:               string[];
+  strategic_implications?: string[];
+  risks?:                 string[];
+  positioning_space?:     string;
 }
 
-// Strategy — funnel + channel merged
+// Strategy — full media strategy
 export interface FunnelStage {
   name:            string;
   goal:            string;
@@ -136,13 +170,65 @@ export interface ChannelOverlap {
   insight:     string;
 }
 
+export interface AudiencePriority {
+  segment:  string;
+  why:      string;
+  priority: "primary" | "secondary" | string;
+}
+
+export interface MessagingPillar {
+  title:       string;
+  description: string;
+}
+
+export interface ChannelRole {
+  channel: string;
+  role:    string;
+  why:     string;
+}
+
+export interface RetargetingRule {
+  trigger: string;
+  action:  string;
+}
+
+export interface BudgetStage {
+  stage:  string;
+  amount: string;
+  pct:    number;
+}
+
+export interface SuccessMetric {
+  label: string;
+  value: string;
+}
+
 export interface StrategyData {
-  stages:          FunnelStage[];
-  retargeting:     string[];
-  channels:        Channel[];
-  channel_overlap: ChannelOverlap[];
-  synergy_score:   number;
-  synergy_notes:   string;
+  // 1. Strategic idea
+  strategic_idea?:      string;
+  // 2. Audience priority
+  audience_priority?:   AudiencePriority[];
+  // 3. Messaging pillars
+  messaging_pillars?:   MessagingPillar[];
+  // 4. Funnel
+  stages:               FunnelStage[];
+  // 5. Channel roles
+  channel_roles?:       ChannelRole[];
+  // 6. Retargeting
+  retargeting:          string[];
+  retargeting_rules?:   RetargetingRule[];
+  // 7. Synergy
+  channels:             Channel[];
+  channel_overlap:      ChannelOverlap[];
+  synergy_score?:       number;
+  synergy_notes?:       string;
+  // 8. Budget rationale
+  budget_stages?:       BudgetStage[];
+  budget_rationale?:    string;
+  // 9. Success metrics
+  north_star_kpi?:      string;
+  north_star_desc?:     string;
+  success_metrics?:     SuccessMetric[];
 }
 
 export interface PacingWeek {
@@ -153,13 +239,28 @@ export interface PacingWeek {
   stage_split?: { awareness?: number; consideration?: number; conversion?: number; retention?: number };
 }
 
+export interface OptimisationRule {
+  icon:  string;
+  title: string;
+  desc:  string;
+}
+
+export interface TestItem {
+  title:    string;
+  option_a: string;
+  option_b: string;
+}
+
 export interface BudgetData {
-  total_budget: number;
-  net_budget:   number;
-  by_channel:   { channel: string; budget: number; pct: number; motivation: string }[];
-  by_funnel:    { stage: string; budget: number; pct: number }[];
-  test_budget:  { amount: number; pct: number; tests: string[] };
-  pacing:       { strategy: string; motivation: string; weeks: PacingWeek[] };
+  total_budget:     number;
+  net_budget:       number;
+  by_channel:       { channel: string; budget: number; pct: number; motivation?: string }[];
+  by_funnel:        { stage: string; budget: number; pct: number }[];
+  budget_rationale?: string[];
+  test_budget:      { amount: number; pct: number; tests: string[]; refresh_week?: number };
+  pacing:           { strategy: string; motivation: string; weeks: PacingWeek[]; phases?: { label: string; weeks: string; description: string; color: string }[] };
+  optimisation_rules?: OptimisationRule[];
+  test_items?:      TestItem[];
 }
 
 export interface MediaChannel {
@@ -178,17 +279,58 @@ export interface MediaChannel {
   cpa:          number;
 }
 
+export interface ExecutionInsight {
+  icon:  string;
+  title: string;
+  desc:  string;
+}
+
 export interface MediaplanData {
-  channels: MediaChannel[];
-  totals:   { budget: number; impressions: number; clicks: number; conversions: number };
+  channels:            MediaChannel[];
+  totals:              { budget: number; impressions: number; clicks: number; conversions: number; blended_cpa?: number };
+  execution_insights?: ExecutionInsight[];
+  optimisation_notes?: string[];
+}
+
+export interface SynthesisRisk {
+  risk:       string;
+  mitigation: string;
+  level:      "high" | "medium" | "low";
+}
+
+export interface SynthesisRecommendation {
+  title:       string;
+  description: string;
+  priority:    "high" | "medium" | "low";
+}
+
+export interface SynthesisNextStep {
+  action: string;
+  owner:  string;
+  timing: string;
+}
+
+export interface SynthesisOutcome {
+  label: string;
+  value: string;
+  sub?:  string;
 }
 
 export interface SynthesisData {
-  summary:         string;
-  strategic_core:  string[];
-  recommendations: { title: string; description: string; priority: "high" | "medium" | "low" }[];
-  risks:           { risk: string; mitigation: string }[];
-  next_steps:      { action: string; owner: string; timing: string }[];
+  // 1
+  summary:          string;
+  summary_paragraphs?: string[];
+  campaign_name?:   string;
+  // 2
+  strategic_core:   { title: string; description: string }[];
+  // 3
+  outcomes?:        SynthesisOutcome[];
+  // 4
+  risks:            SynthesisRisk[];
+  // 5
+  recommendations:  SynthesisRecommendation[];
+  // 6
+  next_steps:       SynthesisNextStep[];
 }
 
 // Union of all section data types

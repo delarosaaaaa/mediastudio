@@ -1,30 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Simple in-memory rate limiter (resets on cold start — fine for internal use)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// ─── Rate limiter ─────────────────────────────────────────────
+// In-memory per serverless instance. Resets on cold start — acceptable for this use case.
+// Map entries are cleaned up on every check to prevent unbounded growth.
+
+interface RateLimitEntry { count: number; resetAt: number; }
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+const WINDOW_MS = 60_000; // 1 minute
+const LIMIT     = 15;     // requests per window
 
 function checkRateLimit(ip: string): boolean {
-  const now    = Date.now();
-  const window = 60_000; // 1 minute
-  const limit  = 15;     // requests per minute
+  const now = Date.now();
+
+  // Purge expired entries to prevent memory leak
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetAt) rateLimitMap.delete(key);
+  }
 
   const entry = rateLimitMap.get(ip);
 
   if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + window });
+    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
     return true;
   }
 
-  if (entry.count >= limit) return false;
-
+  if (entry.count >= LIMIT) return false;
   entry.count++;
   return true;
 }
 
+// ─── Middleware ───────────────────────────────────────────────
+
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Rate limit analyze API
   if (path.startsWith("/api/analyze")) {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     if (!checkRateLimit(ip)) {
@@ -32,15 +42,12 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // Protect dashboard with Basic auth
   if (path.startsWith("/dashboard")) {
     const auth     = req.headers.get("authorization");
     const password = process.env.DASHBOARD_PASSWORD;
-
     if (!password) {
       return new NextResponse("DASHBOARD_PASSWORD not set.", { status: 500 });
     }
-
     const expected = `Basic ${Buffer.from(`admin:${password}`).toString("base64")}`;
     if (auth !== expected) {
       return new NextResponse("Unauthorized", {

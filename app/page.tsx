@@ -131,7 +131,12 @@ export default function Home() {
                 </div>
 
                 <ErrorBoundary key={ms.activeTab}>
-                  <Renderer d={ms.parsed[ms.activeTab]} raw={ms.outputs[ms.activeTab] || ""} />
+                  <Renderer
+                    d={ms.parsed[ms.activeTab]}
+                    raw={ms.outputs[ms.activeTab] || ""}
+                    outputs={ms.activeTab === "synthesis" ? ms.outputs : undefined}
+                    parsed={ms.activeTab === "synthesis" ? ms.parsed as Record<string, unknown> : undefined}
+                  />
                 </ErrorBoundary>
               </div>
             )}
