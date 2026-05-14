@@ -37,16 +37,20 @@ export interface PersonaData {
   name:              string;
   age:               string;
   job:               string;
-  income:            string;
-  education:         string;
-  living_situation:  string;
-  media_prime_time:  string;
-  daily_media_hours: string;
+  income?:           string;
+  education?:        string;
+  living_situation?: string;
+  media_prime_time?: string;
+  daily_media_hours?: string;
+  mindset?:          string;
   pain_points:       string[];
   motivations:       string[];
+  trigger_moments?:  string[];
   platforms:         string[];
-  purchase_trigger:  string;
-  platform_presence: PlatformPresence[];
+  trust_builders?:   string[];
+  purchase_trigger?: string;
+  platform_presence?: PlatformPresence[];
+  recommended?:      boolean;
 }
 
 export interface TotalAudienceData extends PersonaData {
