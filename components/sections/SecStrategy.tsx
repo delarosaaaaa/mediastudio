@@ -1,6 +1,6 @@
 "use client";
 import { C, FS } from "@/lib/tokens";
-import { FeedbackBar, SectionCard, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
+import { Card, FeedbackBar, SectionCard, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
 import type { StrategyData, FunnelStage, Channel, ChannelOverlap, MessagingPillar, ChannelRole, RetargetingRule, BudgetStage, SuccessMetric } from "@/lib/types";
 
 const PHASE_COLS = [C.p900, C.p700, C.p600, C.p300];

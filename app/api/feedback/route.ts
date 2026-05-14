@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createFeedbackEntry } from "@/lib/feedback";
 import type { PhaseKey, FeedbackRating } from "@/lib/types";
 
-const PHASE_KEYS = ["briefing","audience","competitive","funnel","channel","budget","mediaplan","synthesis"] as const;
+const PHASE_KEYS = ["briefing","audience","market","competitive","strategy","budget","mediaplan","synthesis"] as const;
 
 const FeedbackSchema = z.object({
   phase:        z.enum(PHASE_KEYS),
