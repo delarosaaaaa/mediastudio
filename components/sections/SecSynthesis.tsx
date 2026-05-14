@@ -10,25 +10,6 @@ const PRIO_COL: Record<string, string> = {
   low:    C.p400,
 };
 
-: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div style={{ background: C.white, borderRadius: 14, border: `0.5px solid ${C.border}`, padding: "14px 16px", flex: 1, ...style }}>
-      {children}
-    </div>
-  );
-}
-: { left: React.ReactNode; right: React.ReactNode }) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch", marginBottom: 10 }}>
-      <div style={{ display: "flex", flexDirection: "column" }}>{left}</div>
-      <div style={{ display: "flex", flexDirection: "column" }}>{right}</div>
-    </div>
-  );
-}
-: { children: React.ReactNode }) {
-  return <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 8 }}>{children}</div>;
-}
-
 // ─── 1. Executive summary ─────────────────────────────────────
 function ExecutiveSummary({ d }: { d: SynthesisData }) {
   const paragraphs = d.summary_paragraphs?.length

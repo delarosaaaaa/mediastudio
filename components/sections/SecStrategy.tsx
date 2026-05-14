@@ -6,33 +6,6 @@ import type { StrategyData, FunnelStage, Channel, ChannelOverlap, MessagingPilla
 const PHASE_COLS = [C.p900, C.p700, C.p600, C.p300];
 const PHASE_KEYS = ["awareness", "consideration", "conversion", "retention"] as const;
 
-: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div style={{ background: C.white, borderRadius: 14, border: `0.5px solid ${C.border}`, padding: "14px 16px", flex: 1, ...style }}>
-      {children}
-    </div>
-  );
-}
-: { left: React.ReactNode; right: React.ReactNode }) {
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch", marginBottom: 10 }}>
-      <div style={{ display: "flex", flexDirection: "column" }}>{left}</div>
-      <div style={{ display: "flex", flexDirection: "column" }}>{right}</div>
-    </div>
-  );
-}
-: { children: React.ReactNode }) {
-  return <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 8 }}>{children}</div>;
-}
-: { text: string; color?: string }) {
-  return (
-    <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 7 }}>
-      <div style={{ width: 4, height: 4, borderRadius: "50%", background: color, marginTop: 6, flexShrink: 0 }} />
-      <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{text}</div>
-    </div>
-  );
-}
-
 // ─── 1. Strategic idea ────────────────────────────────────────
 function StrategicIdea({ idea }: { idea: string }) {
   return (
