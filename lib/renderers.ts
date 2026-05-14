@@ -15,7 +15,13 @@ import { SecMediaplan }   from "@/components/sections/SecMediaplan";
 import { SecSynthesis }   from "@/components/sections/SecSynthesis";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SectionProps = { d: any; raw: string };
+export type SectionProps = {
+  d:       any;
+  raw:     string;
+  outputs?: Record<string, string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parsed?:  Record<string, any>;
+};
 
 export const RENDERERS: Record<PhaseKey, ComponentType<SectionProps>> = {
   briefing:    SecBriefing,

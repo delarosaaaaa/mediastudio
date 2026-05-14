@@ -7,7 +7,8 @@ import { RENDERERS } from "@/lib/renderers";
 interface Props {
   outputs: Record<string, string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parsed:  Record<string, any> | Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parsed:  Record<string, any>;
 }
 
 export function ExportPDF({ outputs, parsed }: Props) {

@@ -135,7 +135,7 @@ export default function Home() {
                     d={ms.parsed[ms.activeTab]}
                     raw={ms.outputs[ms.activeTab] || ""}
                     outputs={ms.activeTab === "synthesis" ? ms.outputs : undefined}
-                    parsed={ms.activeTab === "synthesis" ? ms.parsed as Record<string, unknown> : undefined}
+                    parsed={ms.activeTab === "synthesis" ? ms.parsed : undefined}
                   />
                 </ErrorBoundary>
               </div>

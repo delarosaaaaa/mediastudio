@@ -159,7 +159,8 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
   d:        SynthesisData;
   raw:      string;
   outputs?: Record<string, string>;
-  parsed?:  Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parsed?:  Record<string, any>;
 }) {
   const strategicCore  = (d.strategic_core  || []) as { title: string; description: string }[];
   const outcomes       = (d.outcomes        || []) as SynthesisOutcome[];
