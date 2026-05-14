@@ -113,21 +113,21 @@ function PersonaCard({ p, index }: { p: PersonaData; index: number }) {
         {(p.motivations?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Motivations" />
-            <BulletList items={p.motivations} color={C.p600} />
+            <BulletList items={p.motivations ?? []} color={C.p600} />
           </>
         )}
 
         {(p.pain_points?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Pain points" />
-            <BulletList items={p.pain_points} color={C.faint} />
+            <BulletList items={p.pain_points ?? []} color={C.faint} />
           </>
         )}
 
         {(p.trigger_moments?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Trigger moments" />
-            <BulletList items={p.trigger_moments} color={C.faint} />
+            <BulletList items={p.trigger_moments ?? []} color={C.faint} />
           </>
         )}
 
@@ -145,7 +145,7 @@ function PersonaCard({ p, index }: { p: PersonaData; index: number }) {
         {(p.trust_builders?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Trust builders" />
-            <BulletList items={p.trust_builders} color={C.faint} />
+            <BulletList items={p.trust_builders ?? []} color={C.faint} />
           </>
         )}
       </div>

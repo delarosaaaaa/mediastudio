@@ -197,7 +197,7 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
   const sov         = (d.sov || []).map(s => ({ name: s.brand || s.name || "", pct: s.pct }));
   const ms          = (d.market_share || []).map(s => ({ name: s.brand || s.name || "", pct: s.pct }));
   const posMap      = d.positioning_map || [];
-  const weaknesses  = d.weaknesses || [];
+  const weaknesses  = (d.weaknesses || []) as CompetitorWeakness[];
   const gaps        = d.market_gaps || [];
   const whiteSpace  = d.white_space || [];
   const patterns    = d.creative_patterns || [];
