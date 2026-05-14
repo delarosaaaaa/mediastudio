@@ -1,5 +1,4 @@
 import { z }            from "zod";
-import Anthropic        from "@anthropic-ai/sdk";
 import { buildPrompt }  from "@/lib/prompts";
 import { DEMO_DATA }    from "@/lib/demo-data";
 import type { PhaseKey } from "@/lib/types";
@@ -11,7 +10,7 @@ const PHASE_KEYS: PhaseKey[] = [
   "strategy", "budget",   "mediaplan", "synthesis",
 ];
 
-const REQUEST_TIMEOUT_MS = 25_000; // 25 seconds
+const REQUEST_TIMEOUT_MS = 55_000; // 55 seconds — Gemini can be slow on large prompts
 
 // ─── Validation schema ────────────────────────────────────────
 
@@ -21,12 +20,6 @@ const BodySchema = z.object({
   outputs:  z.record(z.string()).default({}),
   extra:    z.string().max(2_000).default(""),
 });
-
-// ─── AI clients — hoisted at module level for connection reuse ─
-
-const anthropic = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-  : null;
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -64,9 +57,10 @@ export async function POST(req: Request) {
   }
 
   // ── Demo mode (no API keys configured) ──────────────────────
-  const hasGeminiKey = !!process.env.GEMINI_API_KEY;
+  const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
+  const hasGeminiKey    = !!process.env.GEMINI_API_KEY;
 
-  if (!anthropic && !hasGeminiKey) {
+  if (!hasAnthropicKey && !hasGeminiKey) {
     const demo = DEMO_DATA[body.phase];
     if (!demo) return new Response("Demo data not found.", { status: 500 });
     await new Promise(r => setTimeout(r, 600 + Math.random() * 600));
@@ -76,7 +70,9 @@ export async function POST(req: Request) {
   const prompt = buildPrompt(body.phase, body.briefing, body.outputs, body.extra);
 
   // ── Anthropic ────────────────────────────────────────────────
-  if (anthropic) {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const controller = new AbortController();
     const timeout    = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
@@ -118,7 +114,7 @@ export async function POST(req: Request) {
     const timeout    = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL ?? "gemini-2.0-flash"}:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method:  "POST",
           signal:  controller.signal,
@@ -127,9 +123,17 @@ export async function POST(req: Request) {
         }
       );
       clearTimeout(timeout);
-      if (!res.ok) return aiErrorResponse("Gemini HTTP", `status ${res.status}`);
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error(`[analyze] Gemini HTTP ${res.status}:`, errBody);
+        return aiErrorResponse("Gemini HTTP", `status ${res.status}: ${errBody.slice(0, 200)}`);
+      }
       const data = await res.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      if (!text) {
+        console.error("[analyze] Gemini returned empty text:", JSON.stringify(data).slice(0, 500));
+        return aiErrorResponse("Gemini empty response", data);
+      }
       return textStream(text);
     } catch (e) {
       clearTimeout(timeout);
