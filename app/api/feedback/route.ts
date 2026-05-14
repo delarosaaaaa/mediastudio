@@ -39,35 +39,26 @@ export async function POST(req: Request) {
   return new Response("OK", { status: 200 });
 }
 
-// Temporary GET handler for Gemini diagnostics — remove after debugging
+// Temporary GET handler for Gemini diagnostics
 export async function GET() {
   const key = process.env.GEMINI_API_KEY;
+  if (!key) return Response.json({ error: "GEMINI_API_KEY not set" });
 
-  if (!key) {
-    return Response.json({ status: "NO_KEY", message: "GEMINI_API_KEY is not set in Vercel environment variables" });
-  }
+  // Step 1: list available models
+  const listRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`
+  );
+  const listData = await listRes.json();
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL ?? "gemini-1.5-flash"}:generateContent?key=${key}`,
-      {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ contents: [{ parts: [{ text: "Say hello" }] }] }),
-      }
-    );
-    const body = await res.json();
-    return Response.json({
-      status:     res.ok ? "OK" : "ERROR",
-      http_code:  res.status,
-      key_prefix: key.slice(0, 8) + "...",
-      response:   body,
-    });
-  } catch (e) {
-    return Response.json({
-      status:     "EXCEPTION",
-      error:      String(e),
-      key_prefix: key.slice(0, 8) + "...",
-    });
-  }
+  const models = listData.models
+    ?.filter((m: {name:string, supportedGenerationMethods?:string[]}) =>
+      m.supportedGenerationMethods?.includes("generateContent")
+    )
+    .map((m: {name:string}) => m.name) ?? [];
+
+  return Response.json({
+    key_prefix:        key.slice(0, 8) + "...",
+    available_models:  models,
+    list_status:       listRes.status,
+  });
 }
