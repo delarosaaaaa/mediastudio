@@ -1,6 +1,6 @@
 "use client";
 import { C, FS } from "@/lib/tokens";
-import { KpiCard, FeedbackBar, SectionCard, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
+import { Card, KpiCard, FeedbackBar, Pair, SectionLabel } from "@/components/ui/primitives";
 import { fmtK, fmtN, fmtE, fmtP } from "@/lib/format";
 import type { MediaplanData, MediaChannel, ExecutionInsight } from "@/lib/types";
 

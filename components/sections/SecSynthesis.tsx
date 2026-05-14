@@ -1,6 +1,6 @@
 "use client";
 import { C, FS } from "@/lib/tokens";
-import { FeedbackBar, SectionCard, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
+import { Card, FeedbackBar, SectionCard, Pair, SectionLabel } from "@/components/ui/primitives";
 import { ExportPDF } from "@/components/ui/ExportPDF";
 import type { SynthesisData, SynthesisRisk, SynthesisRecommendation, SynthesisNextStep, SynthesisOutcome } from "@/lib/types";
 

@@ -1,11 +1,12 @@
 "use client";
+import type { ReactNode } from "react";
 import { C, FS } from "@/lib/tokens";
-import { KpiCard, FeedbackBar, SectionCard, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
+import { Card, FeedbackBar, Pair } from "@/components/ui/primitives";
 import type { CompetitiveData, Competitor, PositioningBrand, CompetitorWeakness } from "@/lib/types";
 
 const BRAND_COLORS = [C.p900, C.p700, C.p600, C.p300];
 
-function SecTitle({ children }: { children: React.ReactNode }) {
+function SecTitle({ children }: { children: ReactNode }) {
   return <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 8 }}>{children}</div>;
 }
 

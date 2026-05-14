@@ -234,12 +234,10 @@ export function useMediaStudio() {
   function handleAnswer() {
     if (!answer.trim() || !waitAt) return;
     const qa = questions.map(q => `${q}: ${answer}`).join("\n");
-    const resumeAt = waitAt;
-    setWaitAt(null);
     setQuestions([]);
     setAnswer("");
     addMsg("analyst", null, "Answer received — resuming analysis.", "handoff");
-    runFrom(resumeAt, briefing, outsRef.current, qa);
+    runFrom(waitAt, briefing, outsRef.current, qa);
   }
 
   function reset() {
@@ -250,7 +248,6 @@ export function useMediaStudio() {
     setMessages([]);
     setDone(false);
     setQuestions([]);
-    setWaitAt(null);
     setActivePhase(null);
     setRunning(false);
     setBriefing("");

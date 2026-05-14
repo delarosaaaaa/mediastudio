@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { C, FS } from "@/lib/tokens";
-import { KpiCard, FeedbackBar, SectionCard, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
+import { Card, KpiCard, FeedbackBar, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
 import { fmtK } from "@/lib/format";
 import type { BudgetData, PacingWeek, OptimisationRule, TestItem } from "@/lib/types";
 

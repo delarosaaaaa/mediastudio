@@ -157,7 +157,7 @@ export function FeedbackBar({ phase, outputRaw }: { phase: PhaseKey; outputRaw: 
 // ─── Section layout helpers ───────────────────────────────────
 // Shared across all section components. Import from here — never redefine locally.
 
-interface SectionCardProps { children: React.ReactNode; style?: React.CSSProperties; flex?: boolean; }
+interface SectionCardProps { children: ReactNode; style?: CSSProperties; flex?: boolean; }
 export function SectionCard({ children, style, flex = true }: SectionCardProps) {
   return (
     <div style={{
@@ -173,7 +173,7 @@ export function SectionCard({ children, style, flex = true }: SectionCardProps) 
   );
 }
 
-export function Pair({ left, right }: { left: React.ReactNode; right: React.ReactNode }) {
+export function Pair({ left, right }: { left: ReactNode; right: ReactNode }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch", marginBottom: 10 }}>
       <div style={{ display: "flex", flexDirection: "column" }}>{left}</div>
@@ -182,7 +182,7 @@ export function Pair({ left, right }: { left: React.ReactNode; right: React.Reac
   );
 }
 
-export function SectionLabel({ children }: { children: React.ReactNode }) {
+export function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 8 }}>
       {children}
