@@ -12,7 +12,7 @@ const PRIO_COL: Record<string, string> = {
 
 // ─── 1. Executive summary ─────────────────────────────────────
 function ExecutiveSummary({ d }: { d: SynthesisData }) {
-  const paragraphs = d.summary_paragraphs?.length
+  const paragraphs = (d.summary_paragraphs?.length ?? 0)
     ? d.summary_paragraphs
     : d.summary
       ? d.summary.split(/\n\n+/).filter(Boolean)

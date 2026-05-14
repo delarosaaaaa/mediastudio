@@ -110,28 +110,28 @@ function PersonaCard({ p, index }: { p: PersonaData; index: number }) {
           </>
         )}
 
-        {p.motivations?.length > 0 && (
+        {(p.motivations?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Motivations" />
             <BulletList items={p.motivations} color={C.p600} />
           </>
         )}
 
-        {p.pain_points?.length > 0 && (
+        {(p.pain_points?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Pain points" />
             <BulletList items={p.pain_points} color={C.faint} />
           </>
         )}
 
-        {p.trigger_moments?.length > 0 && (
+        {(p.trigger_moments?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Trigger moments" />
             <BulletList items={p.trigger_moments} color={C.faint} />
           </>
         )}
 
-        {p.platforms?.length > 0 && (
+        {(p.platforms?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Media habits" />
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
@@ -142,7 +142,7 @@ function PersonaCard({ p, index }: { p: PersonaData; index: number }) {
           </>
         )}
 
-        {p.trust_builders?.length > 0 && (
+        {(p.trust_builders?.length ?? 0)> 0 && (
           <>
             <SectionTitle label="Trust builders" />
             <BulletList items={p.trust_builders} color={C.faint} />
@@ -213,7 +213,7 @@ export function SecAudience({ d, raw }: { d: AudienceData; raw: string }) {
         </div>
       )}
 
-      {d.barriers?.length > 0 && (
+      {(d.barriers?.length ?? 0)> 0 && (
         <Card>
           <CardLabel>Barriers & responses</CardLabel>
           {d.barriers.map((b, i) => (

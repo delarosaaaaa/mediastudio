@@ -38,7 +38,7 @@ export function ExportPDF({ outputs, parsed }: Props) {
         const srcH   = (sliceH / totalMM) * canvas.height;
         const sl = document.createElement("canvas");
         sl.width = canvas.width; sl.height = Math.ceil(srcH);
-        sl.getContext("2d")!.drawImage(canvas, 0, -srcY);
+        sl.getContext("2d")?.drawImage(canvas, 0, -srcY);
         pdf.addImage(sl.toDataURL("image/jpeg", 0.92), "JPEG", m, m, usableW, sliceH);
         y += sliceH;
       }

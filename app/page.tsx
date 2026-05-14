@@ -119,7 +119,7 @@ export default function Home() {
                 <div style={{ marginBottom: 18, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16 }}>
                   <div>
                     <div style={{ fontSize: FS.sectionNum, fontWeight: 700, color: C.p400, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>
-                      {String(PHASES.findIndex(p => p.key === ms.activeTab) + 1).padStart(2, "0")} — {AGENTS[PHASES.find(p => p.key === ms.activeTab)!.agent].label.toUpperCase()}
+                      {String(PHASES.findIndex(p => p.key === ms.activeTab) + 1).padStart(2, "0")} — {AGENTS[(PHASES.find(p => p.key === ms.activeTab) ?? PHASES[0]).agent].label.toUpperCase()}
                     </div>
                     <div style={{ fontSize: FS.sectionTitle, fontWeight: 800, color: C.ink, letterSpacing: "-.4px", lineHeight: 1.1 }}>
                       {SEC_TITLES[ms.activeTab]}
