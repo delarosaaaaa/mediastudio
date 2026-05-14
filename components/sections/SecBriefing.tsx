@@ -1,5 +1,5 @@
 "use client";
-import { C, FS, FUNNEL_COLORS } from "@/lib/tokens";
+import { C, FS } from "@/lib/tokens";
 import { Card, KpiCard, CardLabel, FeedbackBar } from "@/components/ui/primitives";
 import type { BriefingData } from "@/lib/types";
 

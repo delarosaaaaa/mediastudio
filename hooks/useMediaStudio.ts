@@ -1,11 +1,11 @@
-let _msgCounter = 0;
-
 "use client";
 
 import { useState, useRef, useCallback } from "react";
 import type { PhaseKey, SectionData, Message, Session } from "@/lib/types";
 import { PHASES, AGENTS, SEC_TITLES } from "@/lib/constants";
 import { parseJSON, extractClientQuestions, stripClientQuestions } from "@/lib/parse";
+
+let _msgCounter = 0;
 
 const MAX_SESSIONS = 5;
 const SESSION_KEY  = "ms_sessions";

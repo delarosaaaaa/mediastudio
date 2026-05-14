@@ -1,3 +1,4 @@
+"use client";
 // ─────────────────────────────────────────────────────────────
 // Shared UI primitives
 // Every section imports from here — never write inline card styles
