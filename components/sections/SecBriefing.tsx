@@ -36,7 +36,7 @@ export function SecBriefing({ d, raw }: { d: BriefingData; raw: string }) {
       {d.params?.budget && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 10 }}>
           {([["Budget", d.params.budget], ["Duration", d.params.duration], ["Geography", d.params.geo], ["Timing", d.params.timing]] as [string, string][]).map(([l, v], i) => (
-            <div key={l} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `2px solid ${C.p700}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
+            <div key={l} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `.5px solid ${C.border}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
               <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{l}</div>
               <AnimatedCounter value={v || "—"} />
             </div>

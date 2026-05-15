@@ -268,7 +268,7 @@ function TabMetrics({ d }: { d: StrategyData }) {
       {metrics.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 8, marginBottom: 10 }}>
           {metrics.map((m, i) => (
-            <div key={i} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `2px solid ${PHASE_COLS[i % 4]}`, animation: `slideInUp .3s ease ${i * .07}s both` }}>
+            <div key={i} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `.5px solid ${C.border}`, animation: `slideInUp .3s ease ${i * .07}s both` }}>
               <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{m.label}</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: "-.5px" }}>
                 <AnimCounter value={m.value} delay={i * 150} />

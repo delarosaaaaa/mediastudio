@@ -236,7 +236,7 @@ function MarketGaps({ gaps, whiteSpace }: { gaps: CompetitiveData["market_gaps"]
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
       {items.map((g, i) => (
-        <div key={i} style={{ background: C.white, borderRadius: 14, border: `.5px solid ${C.border}`, padding: "18px 20px", borderTop: `3px solid ${C.p700}`, animation: `slideInUp .35s ease ${i * .07}s both` }}>
+        <div key={i} style={{ background: C.white, borderRadius: 14, border: `.5px solid ${C.border}`, padding: "18px 20px", borderTop: `.5px solid ${C.border}`, animation: `slideInUp .35s ease ${i * .07}s both` }}>
           <div style={{ fontSize: 11, fontWeight: 500, color: C.p700, marginBottom: 6 }}>0{i + 1}</div>
           <div style={{ fontSize: 14, fontWeight: 500, color: C.ink, marginBottom: 6, lineHeight: 1.3 }}>{g.title}</div>
           <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.65 }}>{g.description}</div>
@@ -286,14 +286,14 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
             {(biggest_under.name || biggest_over.name) && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                 {biggest_under.name && (
-                  <div style={{ background: C.white, borderRadius: 16, border: `.5px solid ${C.border}`, padding: "20px 22px", borderTop: `3px solid ${C.p700}` }}>
+                  <div style={{ background: C.white, borderRadius: 16, border: `.5px solid ${C.border}`, padding: "20px 22px", borderTop: `.5px solid ${C.border}` }}>
                     <div style={{ fontSize: 11, fontWeight: 500, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>Grootste kans</div>
                     <div style={{ fontSize: 28, fontWeight: 500, color: C.ink, letterSpacing: "-1px", lineHeight: 1, marginBottom: 6 }}>{biggest_under.name}</div>
                     <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>Under-investeert in media met +{biggest_under.diff}% verschil tussen marktaandeel en SOV. Klanten worden niet actief vastgehouden.</div>
                   </div>
                 )}
                 {biggest_over.name && (
-                  <div style={{ background: C.white, borderRadius: 16, border: `.5px solid ${C.border}`, padding: "20px 22px", borderTop: `3px solid #A32D2D` }}>
+                  <div style={{ background: C.white, borderRadius: 16, border: `.5px solid ${C.border}`, padding: "20px 22px", borderTop: `.5px solid ${C.border}` }}>
                     <div style={{ fontSize: 11, fontWeight: 500, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>Grootste dreiging</div>
                     <div style={{ fontSize: 28, fontWeight: 500, color: C.ink, letterSpacing: "-1px", lineHeight: 1, marginBottom: 6 }}>{biggest_over.name}</div>
                     <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.55 }}>Over-indexeert op SOV met +{biggest_over.diff}% boven marktaandeel. Investeert agressief om markt te winnen.</div>

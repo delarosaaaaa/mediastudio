@@ -188,7 +188,7 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
           <SectionLabel>Expected outcomes</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 8 }}>
             {outcomes.map((o, i) => (
-              <div key={i} style={{ background: C.white, borderRadius: 12, border: `.5px solid ${C.border}`, borderTop: `2px solid ${outcomeColors[i % 6]}`, padding: "12px 14px", animation: `countUp .5s ease ${i * .1}s both` }}>
+              <div key={i} style={{ background: C.white, borderRadius: 12, border: `.5px solid ${C.border}`, borderTop: `.5px solid ${C.border}`, padding: "12px 14px", animation: `countUp .5s ease ${i * .1}s both` }}>
                 <div style={{ fontSize: FS.bodyXs, color: C.muted, marginBottom: 5 }}>{o.label}</div>
                 <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: "-.5px", lineHeight: 1, marginBottom: 3 }}>
                   <AnimCounter value={o.value} delay={i * 150} />

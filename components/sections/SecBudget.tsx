@@ -135,7 +135,7 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
           ["Test budget", `${fmtK(d.test_budget?.amount ?? 0)} (${d.test_budget?.pct ?? 0}%)`],
           ["Active channels", String((d.by_channel?.length ?? 0))],
         ].map(([l, v], i) => (
-          <div key={l} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `2px solid ${C.p700}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
+          <div key={l} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `.5px solid ${C.border}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
             <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{l}</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{v}</div>
           </div>

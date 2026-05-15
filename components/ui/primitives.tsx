@@ -37,7 +37,7 @@ export function KpiCard({ label, value, sub }: KpiCardProps) {
       borderRadius: 11,
       boxShadow:    C.shadowSm,
       padding:      "12px 14px",
-      borderTop:    `2px solid ${C.p700}`,
+      borderTop:    `.5px solid ${C.border}`,
     }}>
       <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>
         {label}
