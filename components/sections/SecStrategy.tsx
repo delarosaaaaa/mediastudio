@@ -107,7 +107,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
       <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
         {/* ── TAB 1: FUNNEL & AUDIENCE ── */}
-        {(sub === tabs[0]) && (
+        {sub === tabs[0] && (
           <div>
             {d.strategic_idea && (
               <div style={{ background: C.p900, borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
@@ -119,13 +119,25 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
               {priority.length > 0 && (
                 <SCard delay={0.05}>
                   <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Audience priority</div></div>
-                  {priority.map((ap, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ padding: "2px 9px", background: `${PHASE_COLS[i%4]}22`, color: PHASE_COLS[i%4], borderRadius: 20, fontSize: FS.bodyXs, fontWeight: 700, minWidth: 100, textAlign: "center" }}>{ap.segment}</div><div style={{ flex: 1, fontSize: FS.bodyXs, color: C.muted }}>{ap.why}</div><div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: PHASE_COLS[i%4] }}>{ap.priority}</div></div>)}
+                  {priority.map((ap, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 16px", borderTop: `.5px solid ${C.border}` }}>
+                      <div style={{ padding: "2px 9px", background: `${PHASE_COLS[i%4]}22`, color: PHASE_COLS[i%4], borderRadius: 20, fontSize: FS.bodyXs, fontWeight: 700, minWidth: 100, textAlign: "center" }}>{ap.segment}</div>
+                      <div style={{ flex: 1, fontSize: FS.bodyXs, color: C.muted }}>{ap.why}</div>
+                      <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: PHASE_COLS[i%4] }}>{ap.priority}</div>
+                    </div>
+                  ))}
                 </SCard>
               )}
               {pillars.length > 0 && (
                 <SCard delay={0.1}>
                   <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Messaging pillars</div></div>
-                  {pillars.map((p, i) => <div key={i} style={{ padding: "10px 16px", borderTop: `.5px solid ${C.border}`, background: i === 0 ? C.p100 : "transparent" }}><div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 3 }}>0{i+1}</div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.p900, marginBottom: 2 }}>{p.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted }}>{p.description}</div></div>)}
+                  {pillars.map((p, i) => (
+                    <div key={i} style={{ padding: "10px 16px", borderTop: `.5px solid ${C.border}`, background: i === 0 ? C.p100 : "transparent" }}>
+                      <div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 3 }}>0{i+1}</div>
+                      <div style={{ fontSize: FS.body, fontWeight: 700, color: C.p900, marginBottom: 2 }}>{p.title}</div>
+                      <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{p.description}</div>
+                    </div>
+                  ))}
                 </SCard>
               )}
             </div>
@@ -139,47 +151,89 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
         )}
 
         {/* ── TAB 2: CHANNELS & SYNERGY ── */}
-        {(sub === tabs[1]) && (
+        {sub === tabs[1] && (
           <div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-              {channels.length > 0 && <div><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Channel synergy</div><ChannelNet channels={channels} overlaps={overlaps} /></div>}
+              {channels.length > 0 && (
+                <div>
+                  <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Channel synergy</div>
+                  <ChannelNet channels={channels} overlaps={overlaps} />
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Funnel overlap</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-                  {["Awareness", "Consideration", "Conversion", "Retention"].map((phase, i) => { const rel = overlaps.slice(i, i+1)[0]; const pct = rel?.overlap_pct ?? (40 + i * 15); return (<div key={i} style={{ background: C.white, borderRadius: 10, boxShadow: C.shadowSm, padding: "10px 12px" }}><div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: PHASE_COLS[i], textTransform: "uppercase" as const, letterSpacing: ".06em", marginBottom: 6 }}>{phase}</div><div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 4 }}><svg width="44" height="32" viewBox="0 0 44 32"><circle cx="14" cy="16" r="13" fill={PHASE_COLS[i]} opacity=".75"/><circle cx="26" cy="10" r="11" fill={PHASE_COLS[i]} opacity=".5"/><text x="21" y="17" fontSize="8" fontWeight="700" fill="white" textAnchor="middle" fontFamily="sans-serif">{pct}%</text></svg><div style={{ fontSize: 15, fontWeight: 800, color: PHASE_COLS[i] }}>{pct}%</div></div><div style={{ fontSize: FS.bodyXs, color: C.muted }}>{rel?.insight ?? "Synergy actief"}</div></div>); })}
+                  {["Awareness", "Consideration", "Conversion", "Retention"].map((phase, i) => {
+                    const rel = overlaps.slice(i, i+1)[0];
+                    const pct = rel?.overlap_pct ?? (40 + i * 15);
+                    return (
+                      <div key={i} style={{ background: C.white, borderRadius: 10, boxShadow: C.shadowSm, padding: "10px 12px" }}>
+                        <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: PHASE_COLS[i], textTransform: "uppercase" as const, letterSpacing: ".06em", marginBottom: 6 }}>{phase}</div>
+                        <div style={{ display: "flex", gap: 7, alignItems: "center", marginBottom: 4 }}>
+                          <svg width="44" height="32" viewBox="0 0 44 32">
+                            <circle cx="14" cy="16" r="13" fill={PHASE_COLS[i]} opacity=".75"/>
+                            <circle cx="26" cy="10" r="11" fill={PHASE_COLS[i]} opacity=".5"/>
+                            <text x="21" y="17" fontSize="8" fontWeight="700" fill="white" textAnchor="middle" fontFamily="sans-serif">{pct}%</text>
+                          </svg>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: PHASE_COLS[i] }}>{pct}%</div>
+                        </div>
+                        <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{rel?.insight ?? "Synergy actief"}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
             {channels.length > 0 && (
               <SCard delay={0.1}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Channel details</div></div>
-                {channels.map((ch, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 26, height: 26, borderRadius: 7, background: PHASE_COLS[i%4], flexShrink: 0 }}/><div style={{ flex: 1 }}><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{ch.name}</div><div style={{ fontSize: FS.bodyXs, color: C.muted }}>{ch.role}</div></div><div style={{ fontSize: FS.bodyXs, color: C.muted, maxWidth: 200, textAlign: "right" }}>{ch.motivation}</div></div>)}
+                {channels.map((ch, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: PHASE_COLS[i%4], flexShrink: 0 }}/>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{ch.name}</div>
+                      <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{ch.role}</div>
+                    </div>
+                    <div style={{ fontSize: FS.bodyXs, color: C.muted, maxWidth: 200, textAlign: "right" }}>{ch.motivation}</div>
+                  </div>
+                ))}
               </SCard>
             )}
           </div>
         )}
 
         {/* ── TAB 3: RETARGETING & METRICS ── */}
-        {(sub === tabs[2]) && (
+        {sub === tabs[2] && (
           <div>
-            <div>
             {rules.length > 0 ? (
               <SCard delay={0}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Retargeting rules</div></div>
-                {rules.map((r, i) => <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 18px 1fr", gap: 8, alignItems: "center", padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ background: C.inset, borderRadius: 8, padding: "8px 10px", fontSize: FS.bodyXs, color: C.body, lineHeight: 1.5 }}>{r.trigger}</div><div style={{ textAlign: "center", color: C.faint }}>→</div><div style={{ background: C.p100, borderLeft: `2px solid ${C.p700}`, borderRadius: "0 8px 8px 0", padding: "8px 10px", fontSize: FS.bodyXs, color: C.p700, lineHeight: 1.5 }}>{r.action}</div></div>)}
+                {rules.map((r, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 20px 1fr", gap: 8, alignItems: "center", padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ background: C.inset, borderRadius: 8, padding: "8px 10px", fontSize: FS.bodyXs, color: C.body, lineHeight: 1.5 }}>{r.trigger}</div>
+                    <div style={{ textAlign: "center", color: C.faint }}>→</div>
+                    <div style={{ background: C.p100, borderLeft: `2px solid ${C.p700}`, borderRadius: "0 8px 8px 0", padding: "8px 10px", fontSize: FS.bodyXs, color: C.p700, lineHeight: 1.5 }}>{r.action}</div>
+                  </div>
+                ))}
               </SCard>
-            ) : (
+            ) : generic.length > 0 && (
               <SCard delay={0}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Retargeting aanpak</div></div>
-                {generic.slice(0, 6).map((item, i) => <div key={i} style={{ display: "flex", gap: 8, padding: "9px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }}/><div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{item}</div></div>)}
+                {generic.slice(0, 6).map((item, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, padding: "9px 16px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }}/>
+                    <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{item}</div>
+                  </div>
+                ))}
               </SCard>
             )}
-          </div>
-            {/* ── Metrics ── */}
-            {/* Metrics merged into this tab */}
             {d.north_star_kpi && (
-              <div style={{ background: C.p900, borderRadius: 14, padding: "16px 20px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div><div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>North-star KPI</div><div style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>{d.north_star_kpi}</div>{d.north_star_desc && <div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.45)", marginTop: 3 }}>{d.north_star_desc}</div>}</div>
+              <div style={{ background: C.p900, borderRadius: 14, padding: "16px 20px", marginBottom: 12, marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>North-star KPI</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>{d.north_star_kpi}</div>
+                  {d.north_star_desc && <div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.45)", marginTop: 3 }}>{d.north_star_desc}</div>}
+                </div>
                 <div style={{ fontSize: 36, color: "rgba(255,255,255,.07)" }}>★</div>
               </div>
             )}
@@ -189,21 +243,14 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
                   <div key={i} style={{ background: C.white, borderRadius: 12, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .3s ease ${i*.07}s both` }}>
                     <div style={{ padding: "12px 14px" }}>
                       <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>{m.label}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: "-.5px" }}><AnimCounter value={m.value} delay={i * 150} /></div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: "-.5px" }}>
+                        <AnimCounter value={m.value} delay={i * 150} />
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            {d.budget_stages && d.budget_stages.length > 0 && (
-              <SCard delay={0.2}>
-                <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Budget per fase</div></div>
-                {d.budget_stages.map((s, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: PHASE_COLS[i%4], flexShrink: 0 }}/><div style={{ flex: 1, fontSize: FS.bodySm, color: C.ink }}>{s.stage}</div><div style={{ fontSize: FS.bodySm, fontWeight: 700, color: C.ink }}>{s.amount}</div><div style={{ fontSize: FS.bodyXs, color: C.muted }}>{s.pct}%</div></div>)}
-              </SCard>
-            )}
-          </div>
-      </div>
-      <FeedbackBar phase="strategy" outputRaw={raw} />
           </div>
         )}
       </div>
