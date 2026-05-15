@@ -1,56 +1,63 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { C, FS } from "@/lib/tokens";
-import { KpiCard, Card, CardLabel, FeedbackBar, Pair, SectionLabel } from "@/components/ui/primitives";
+import { FeedbackBar } from "@/components/ui/primitives";
 import type { MarketData, MarketSegment, MarketTrend, MarketGap } from "@/lib/types";
 
-// Animated donut chart
+function SubNav({ tabs, active, onChange }: { tabs: string[]; active: string; onChange: (t: string) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 2, marginBottom: 20, borderBottom: `.5px solid ${C.border}` }}>
+      {tabs.map(t => (
+        <button key={t} onClick={() => onChange(t)} style={{ padding: "6px 16px", border: "none", background: "transparent", fontSize: FS.bodySm, fontWeight: active === t ? 700 : 500, color: active === t ? C.p700 : C.muted, cursor: "pointer", borderBottom: `2px solid ${active === t ? C.p700 : "transparent"}`, marginBottom: -1, transition: "color .2s" }}>
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SCard({ children, accent, delay = 0 }: { children: ReactNode; accent?: string; delay?: number }) {
+  return (
+    <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", marginBottom: 10, animation: `slideInUp .4s ease ${delay}s both` }}>
+      {accent && <div style={{ height: 3, background: accent, borderRadius: "14px 14px 0 0" }} />}
+      {children}
+    </div>
+  );
+}
+
 function DonutChart({ segments }: { segments: MarketSegment[] }) {
   const [animated, setAnimated] = useState(false);
-  const [hovered, setHovered] = useState<number | null>(null);
-  const ref = useRef<SVGCircleElement[]>([]);
-  const cols = [C.p900, C.p700, C.p600, C.p400];
-  const C_VAL = 176; // 2πr for r=28
-
-  useEffect(() => {
-    const timer = setTimeout(() => setAnimated(true), 150);
-    return () => clearTimeout(timer);
-  }, []);
-
+  const [hov, setHov] = useState<number | null>(null);
+  useEffect(() => { const t = setTimeout(() => setAnimated(true), 200); return () => clearTimeout(t); }, []);
+  const COLS = [C.p900, C.p700, C.p600, C.p300];
+  const CV = 176;
   let offset = 0;
   const arcs = segments.map((s, i) => {
-    const dash = animated ? (s.pct / 100) * C_VAL : 0;
-    const gap = C_VAL - dash;
-    const o = -offset;
-    offset += (s.pct / 100) * C_VAL;
-    return { dash, gap, offset: -o, col: cols[i % 4], ...s };
+    const dash = animated ? (s.pct / 100) * CV : 0;
+    const o = offset;
+    offset += (s.pct / 100) * CV;
+    return { dash, gap: CV - dash, offset: -o, col: COLS[i % 4], ...s };
   });
-
   return (
-    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+    <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "16px 18px" }}>
       <svg width="90" height="90" viewBox="0 0 90 90" style={{ flexShrink: 0 }}>
-        <circle cx="45" cy="45" r="28" fill="none" stroke={C.inset} strokeWidth="12" />
+        <circle cx="45" cy="45" r="28" fill="none" stroke={C.inset} strokeWidth="12"/>
         {arcs.map((a, i) => (
-          <circle
-            key={i} cx="45" cy="45" r="28" fill="none"
-            stroke={a.col} strokeWidth={hovered === i ? 15 : 12}
-            strokeDasharray={`${a.dash} ${a.gap}`}
-            strokeDashoffset={a.offset}
-            transform="rotate(-90 45 45)"
-            style={{ transition: "stroke-dasharray 1s cubic-bezier(.4,0,.2,1), stroke-width .2s" }}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
-          />
+          <circle key={i} cx="45" cy="45" r="28" fill="none" stroke={a.col} strokeWidth={hov === i ? 15 : 12}
+            strokeDasharray={`${a.dash} ${a.gap}`} strokeDashoffset={a.offset}
+            transform="rotate(-90 45 45)" style={{ transition: "stroke-dasharray 1s ease, stroke-width .2s" }}
+            onMouseEnter={() => setHov(i)} onMouseLeave={() => setHov(null)}/>
         ))}
-        <text x="45" y="49" textAnchor="middle" fontSize={10} fontWeight="700" fill={C.ink} fontFamily="sans-serif">
-          {hovered !== null ? segments[hovered].pct + "%" : "100%"}
+        <text x="45" y="49" textAnchor="middle" fontSize="10" fontWeight="700" fill={C.ink} fontFamily="sans-serif">
+          {hov !== null ? segments[hov].pct + "%" : "100%"}
         </text>
       </svg>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
         {segments.map((s, i) => (
-          <div key={i} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(null)}
-            style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 6px", borderRadius: 6, background: hovered === i ? C.inset : "transparent", cursor: "pointer", transition: "background .15s" }}>
-            <div style={{ width: 9, height: 9, borderRadius: 3, background: cols[i % 4], flexShrink: 0 }} />
+          <div key={i} onMouseEnter={() => setHov(i)} onMouseLeave={() => setHov(null)}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 7px", borderRadius: 7, background: hov === i ? C.inset : "transparent", cursor: "pointer", transition: "background .15s" }}>
+            <div style={{ width: 9, height: 9, borderRadius: 3, background: arcs[i].col, flexShrink: 0 }} />
             <span style={{ flex: 1, fontSize: FS.bodySm, color: C.ink }}>{s.name}</span>
             <span style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{s.pct}%</span>
           </div>
@@ -60,143 +67,144 @@ function DonutChart({ segments }: { segments: MarketSegment[] }) {
   );
 }
 
-// Trend sparkline
-function TrendRow({ t, delay }: { t: MarketTrend; delay: number }) {
-  const [drawn, setDrawn] = useState(false);
-  useEffect(() => { const tm = setTimeout(() => setDrawn(true), delay); return () => clearTimeout(tm); }, [delay]);
-  const col = t.direction === "up" ? C.p700 : t.direction === "down" ? "#A32D2D" : C.muted;
-
-  return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 0", borderBottom: `.5px solid ${C.border}`, transition: "background .15s", cursor: "pointer" }}
-      onMouseEnter={e => (e.currentTarget.style.background = C.inset)}
-      onMouseLeave={e => (e.currentTarget.style.background = "")}>
-      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 700, color: col, transition: "background .2s" }}>
-        {t.direction === "up" ? "↑" : t.direction === "down" ? "↓" : "→"}
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{t.title}</div>
-        <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.description}</div>
-      </div>
-      <svg width="60" height="24" viewBox="0 0 60 24" style={{ flexShrink: 0, marginTop: 4 }}>
-        <polyline
-          points={t.direction === "up" ? "0,20 12,16 24,14 36,10 48,7 60,3" : t.direction === "down" ? "0,4 12,8 24,10 36,14 48,17 60,20" : "0,12 15,11 30,13 45,12 60,12"}
-          fill="none" stroke={col} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          strokeDasharray="200" strokeDashoffset={drawn ? "0" : "200"}
-          style={{ transition: "stroke-dashoffset 1s ease" }}
-        />
-      </svg>
-    </div>
-  );
-}
-
-// Quote typewriter
-function QuoteTypewriter({ text }: { text: string }) {
+function TypewriterQuote({ text }: { text: string }) {
   const [displayed, setDisplayed] = useState("");
   useEffect(() => {
-    let i = 0;
-    const t = setInterval(() => {
-      if (i < text.length) { setDisplayed(text.slice(0, ++i)); }
-      else clearInterval(t);
-    }, 20);
+    let i = 0; const t = setInterval(() => { if (i < text.length) setDisplayed(text.slice(0, ++i)); else clearInterval(t); }, 20);
     return () => clearInterval(t);
   }, [text]);
   return (
-    <div style={{ background: C.white, borderRadius: "0 14px 14px 0", border: `.5px solid ${C.border}`, borderLeft: `3px solid ${C.border}`, padding: "14px 16px", flex: 1, display: "flex", alignItems: "center" }}>
-      <div style={{ fontSize: FS.bodyLg, color: C.ink, lineHeight: 1.8, fontStyle: "italic" }}>
-        "{displayed}"
-        <span style={{ display: "inline-block", width: 2, height: 14, background: C.p700, marginLeft: 2, verticalAlign: "middle", animation: "typing .6s infinite" }} />
-      </div>
+    <div style={{ padding: "14px 18px", fontSize: FS.bodyLg, color: C.ink, lineHeight: 1.8, fontStyle: "italic" }}>
+      "{displayed}<span style={{ display: "inline-block", width: 2, height: 13, background: C.p700, marginLeft: 2, verticalAlign: "middle", animation: "typing .6s infinite" }}/>"
     </div>
   );
 }
 
 export function SecMarket({ d, raw }: { d: MarketData; raw: string }) {
-  const segments = (d.segments || []) as MarketSegment[];
+  const [sub, setSub] = useState("① Marktlandschap");
+  const tabs = ["① Marktlandschap", "② Trends & kansen", "③ Strategische positie"];
+  const segs = (d.segments || []) as MarketSegment[];
   const trends = (d.trends || []) as MarketTrend[];
-  const opportunities = (d.opportunities || []) as MarketGap[];
-  const whyNow = (d.why_now || []) as string[];
-  const implications = (d.strategic_implications || []) as string[];
-  const risks = (d.risks || []) as string[];
+  const opps = (d.opportunities || []) as MarketGap[];
+  const whyNow = d.why_now || [];
+  const implications = d.strategic_implications || [];
+  const risks = d.risks || [];
 
   return (
     <div>
-      {/* KPI strip */}
-      {(d.tam || d.sam || d.target_size || d.growth) && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 10 }}>
-          {[["Total addressable", d.tam], ["Serviceable", d.sam], ["Target segment", d.target_size], ["Growth", d.growth]].filter(([, v]) => v).map(([l, v], i) => (
-            <div key={l as string} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `.5px solid ${C.border}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
-              <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{l as string}</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{v as string}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <SubNav tabs={tabs} active={sub} onChange={setSub} />
+      <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
-      {/* Donut + Trends */}
-      <Pair
-        left={<><SectionLabel>2 — Market segments</SectionLabel><Card>{segments.length > 0 ? <DonutChart segments={segments} /> : <div style={{ color: C.muted, fontSize: FS.bodySm }}>No segment data</div>}</Card></>}
-        right={<><SectionLabel>3 — Key trends</SectionLabel><Card style={{ padding: "0 16px" }}>{trends.map((t, i) => <TrendRow key={i} t={t} delay={200 + i * 150} />)}</Card></>}
-      />
-
-      {/* Consumer behaviour */}
-      {d.consumer_behaviour && (
-        <div style={{ marginBottom: 10 }}>
-          <SectionLabel>4 — Consumer behaviour shift</SectionLabel>
-          <QuoteTypewriter text={d.consumer_behaviour} />
-        </div>
-      )}
-
-      {/* Opportunities + Why now */}
-      {(opportunities.length > 0 || whyNow.length > 0) && (
-        <Pair
-          left={<><SectionLabel>5 — Market opportunities</SectionLabel>
-            <Card>{opportunities.map((g, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start", animation: `slideInUp .35s ease ${i * .08}s both` }}>
-                <div style={{ width: 20, height: 20, borderRadius: 6, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: FS.bodyXs, fontWeight: 700, color: C.p700, flexShrink: 0 }}>{i + 1}</div>
-                <div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{g.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.55 }}>{g.description}</div></div>
-              </div>
-            ))}</Card></>}
-          right={<><SectionLabel>6 — Why now</SectionLabel>
-            <Card>{whyNow.map((w, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 7, animation: `slideInUp .3s ease ${i * .07}s both` }}>
-                <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 6, flexShrink: 0 }} />
-                <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{w}</div>
-              </div>
-            ))}</Card></>}
-        />
-      )}
-
-      {/* Implications + Risks */}
-      {(implications.length > 0 || risks.length > 0) && (
-        <Pair
-          left={<><SectionLabel>7 — Strategic implications</SectionLabel>
-            <Card>{implications.map((imp, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 7 }}>
-                <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 6, flexShrink: 0 }} />
-                <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{imp}</div>
-              </div>
-            ))}</Card></>}
-          right={<><SectionLabel>8 — Key risks</SectionLabel>
-            <Card><div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {risks.map((r, i) => (
-                <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", background: C.inset, borderRadius: 20, fontSize: FS.bodySm, color: C.muted }}>
-                  <span style={{ fontSize: 12, color: "#BA7517" }}>⚠</span>{r}
+        {/* ── TAB 1: MARKTLANDSCHAP ── */}
+        {sub === tabs[0] && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 12 }}>
+              {[["Total addressable", d.tam], ["Serviceable", d.sam], ["Target segment", d.target_size], ["Marktgroei", d.growth]].filter(([,v]) => v).map(([l, v], i) => (
+                <div key={l as string} style={{ background: C.white, borderRadius: 12, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .4s ease ${i*.07}s both` }}>
+                  <div style={{ padding: "12px 14px" }}>
+                    <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>{l as string}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{v as string}</div>
+                  </div>
                 </div>
               ))}
-            </div></Card></>}
-        />
-      )}
-
-      {/* Positioning */}
-      {d.positioning_space && (
-        <div>
-          <SectionLabel>9 — Positioning space</SectionLabel>
-          <div style={{ background: C.p100, borderRadius: "0 14px 14px 0", borderLeft: `3px solid ${C.p700}`, padding: "16px 18px" }}>
-            <div style={{ fontSize: FS.bodyLg, fontWeight: 700, color: C.p900, lineHeight: 1.75 }}>{d.positioning_space}</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {segs.length > 0 && (
+                <SCard delay={0.05}>
+                  <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Segmenten</div></div>
+                  <DonutChart segments={segs} />
+                </SCard>
+              )}
+              {d.consumer_behaviour && (
+                <SCard delay={0.1}>
+                  <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Consumer behaviour shift</div></div>
+                  <TypewriterQuote text={d.consumer_behaviour} />
+                </SCard>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
+        {/* ── TAB 2: TRENDS & KANSEN ── */}
+        {sub === tabs[1] && (
+          <div>
+            {trends.length > 0 && (
+              <SCard delay={0}>
+                <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 0 }}>Key trends</div></div>
+                {trends.map((t, i) => {
+                  const col = t.direction === "up" ? C.p700 : t.direction === "down" ? "#A32D2D" : C.muted;
+                  const arrow = t.direction === "up" ? "↑" : t.direction === "down" ? "↓" : "→";
+                  const [drawn, setDrawn] = useState(false);
+                  useEffect(() => { const tm = setTimeout(() => setDrawn(true), 200 + i * 150); return () => clearTimeout(tm); }, []);
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 18px", borderTop: `.5px solid ${C.border}` }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: col, flexShrink: 0 }}>{arrow}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{t.title}</div>
+                        <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.description}</div>
+                      </div>
+                      <svg width="60" height="24" viewBox="0 0 60 24" style={{ flexShrink: 0, marginTop: 4 }}>
+                        <polyline points={t.direction==="up"?"0,20 15,16 30,13 45,9 60,4":t.direction==="down"?"0,4 15,8 30,12 45,16 60,20":"0,12 20,11 40,13 60,12"}
+                          fill="none" stroke={col} strokeWidth="2" strokeLinecap="round"
+                          strokeDasharray="120" strokeDashoffset={drawn ? "0" : "120"} style={{ transition: "stroke-dashoffset 1s ease" }}/>
+                      </svg>
+                    </div>
+                  );
+                })}
+              </SCard>
+            )}
+            {opps.length > 0 && (
+              <div>
+                <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Market opportunities</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 10 }}>
+                  {opps.map((g, i) => (
+                    <div key={i} style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .35s ease ${i*.07}s both` }}>
+                      <div style={{ height: 3, background: C.p900, borderRadius: "14px 14px 0 0" }} />
+                      <div style={{ padding: "14px 16px" }}>
+                        <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: C.p700, marginBottom: 5 }}>0{i + 1}</div>
+                        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{g.title}</div>
+                        <div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.55 }}>{g.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {whyNow.length > 0 && (
+              <SCard delay={0.1}>
+                <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 0 }}>Why now</div></div>
+                {whyNow.map((w, i) => <div key={i} style={{ display: "flex", gap: 8, padding: "9px 18px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }} /><div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{w}</div></div>)}
+              </SCard>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 3: STRATEGISCHE POSITIE ── */}
+        {sub === tabs[2] && (
+          <div>
+            {d.positioning_space && (
+              <div style={{ background: C.p100, borderLeft: `3px solid ${C.p700}`, borderRadius: "0 14px 14px 0", padding: "16px 18px", marginBottom: 12 }}>
+                <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.p700, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>Positioning space</div>
+                <div style={{ fontSize: FS.bodyLg, fontWeight: 700, color: C.p900, lineHeight: 1.75 }}>{d.positioning_space}</div>
+              </div>
+            )}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {implications.length > 0 && (
+                <SCard delay={0.05}>
+                  <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 0 }}>Strategic implications</div></div>
+                  {implications.map((imp, i) => <div key={i} style={{ display: "flex", gap: 8, padding: "9px 18px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }} /><div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{imp}</div></div>)}
+                </SCard>
+              )}
+              {risks.length > 0 && (
+                <SCard delay={0.1}>
+                  <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 0 }}>Key risks</div></div>
+                  {risks.map((r, i) => <div key={i} style={{ display: "flex", gap: 7, padding: "9px 18px", borderTop: `.5px solid ${C.border}` }}><span style={{ fontSize: 11, color: "#BA7517", flexShrink: 0 }}>⚠</span><div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{r}</div></div>)}
+                </SCard>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       <FeedbackBar phase="market" outputRaw={raw} />
     </div>
   );
