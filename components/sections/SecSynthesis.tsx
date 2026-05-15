@@ -124,12 +124,20 @@ function RiskRadar({ risks }: { risks: SynthesisRisk[] }) {
   );
 }
 
+const SEC_SYN_TABS = [
+  { key: "summary",   label: "Summary"    },
+  { key: "outcomes",  label: "Outcomes"   },
+  { key: "nextsteps", label: "Next steps" },
+] as const;
+type SynTab = typeof SEC_SYN_TABS[number]["key"];
+
 export function SecSynthesis({ d, raw, outputs, parsed }: {
   d: SynthesisData; raw: string;
   outputs?: Record<string, string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parsed?:  Record<string, any>;
 }) {
+  const [sub, setSub] = useState<SynTab>("summary");
   const paragraphs: string[] = (d.summary_paragraphs && d.summary_paragraphs.length > 0)
     ? d.summary_paragraphs
     : d.summary ? d.summary.split(/\n\n+/).filter(Boolean) : [];
@@ -143,6 +151,20 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
 
   return (
     <div>
+      {/* Subtab nav */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 18, borderBottom: `.5px solid ${C.border}` }}>
+        {SEC_SYN_TABS.map(t => (
+          <button key={t.key} onClick={() => setSub(t.key)} style={{
+            padding: "6px 14px", border: "none", background: "transparent",
+            fontSize: FS.bodySm, fontWeight: sub === t.key ? 700 : 500,
+            color: sub === t.key ? C.p700 : C.muted, cursor: "pointer",
+            borderBottom: `2px solid ${sub === t.key ? C.p700 : "transparent"}`,
+            marginBottom: -1, transition: "color .2s",
+          }}>{t.label}</button>
+        ))}
+      </div>
+      <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
+
       {paragraphs.length > 0 && <SummaryTypewriter paragraphs={paragraphs} />}
 
       {/* Strategic core */}
@@ -207,6 +229,7 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
         </div>
       )}
 
+      </div>
       {outputs && parsed && <ExportPDF outputs={outputs} parsed={parsed} />}
       <FeedbackBar phase="synthesis" outputRaw={raw} />
     </div>

@@ -161,13 +161,37 @@ function PositioningMap({ brands, insight }: { brands: PositioningBrand[]; insig
   );
 }
 
+const SEC_COMP_TABS = [
+  { key: "overview",    label: "Overview" },
+  { key: "positioning", label: "Positioning" },
+  { key: "gaps",        label: "White space" },
+] as const;
+type CompTab = typeof SEC_COMP_TABS[number]["key"];
+
 export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) {
+  const [sub, setSub] = useState<CompTab>("overview");
   const competitors = d.competitors || [];
   const weaknesses = (d.weaknesses || []) as CompetitorWeakness[];
   const posMap = (d.positioning_map || []) as PositioningBrand[];
 
+  const FS_sm = "11px";
   return (
     <div>
+      {/* Subtab nav */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 18, borderBottom: `.5px solid ${C.border}` }}>
+        {SEC_COMP_TABS.map(t => (
+          <button key={t.key} onClick={() => setSub(t.key)} style={{
+            padding: "6px 14px", border: "none", background: "transparent",
+            fontSize: FS.bodySm, fontWeight: sub === t.key ? 700 : 500,
+            color: sub === t.key ? C.p700 : C.muted, cursor: "pointer",
+            borderBottom: `2px solid ${sub === t.key ? C.p700 : "transparent"}`,
+            marginBottom: -1, transition: "color .2s",
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {sub === "overview" && (
+        <div key="overview" style={{ animation: "slideInRight .3s ease" }}>
       <Pair
         left={<><SecTitle>SOV vs Market share</SecTitle><SovBars sov={d.sov || []} ms={d.market_share || []} /></>}
         right={<><SecTitle>Weakness matrix</SecTitle><Heatmap competitors={competitors} /></>}
@@ -215,7 +239,49 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
         </div>
       )}
 
-      <FeedbackBar phase="competitive" outputRaw={raw} />
+          <FeedbackBar phase="competitive" outputRaw={raw} />
+        </div>
+      )}
+
+      {sub === "positioning" && (
+        <div key="positioning" style={{ animation: "slideInRight .3s ease" }}>
+          <Pair
+            left={<><SectionLabel>Positioning map</SectionLabel>
+              {posMap.length > 0
+                ? <PositioningMap brands={posMap} insight={d.positioning_insight} />
+                : <Card><div style={{ fontSize: FS.bodySm, color: C.muted }}>No positioning data</div></Card>
+              }</>}
+            right={<><SectionLabel>White space</SectionLabel>
+              <div style={{ background: C.p100, borderLeft: `3px solid ${C.p700}`, borderRadius: "0 12px 12px 0", padding: "14px 16px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                {(d.white_space || []).map((w, i) => (
+                  <div key={i} style={{ display: "flex", gap: 9, marginBottom: 8, alignItems: "flex-start" }}>
+                    <div style={{ width: 16, height: 16, borderRadius: 4, background: C.p700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                      <svg width="8" height="7" viewBox="0 0 8 7"><path d="M1 3.5l2 2.5 4-5" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
+                    </div>
+                    <div style={{ fontSize: FS.bodySm, color: C.p900, lineHeight: 1.55 }}>{w.label}</div>
+                  </div>
+                ))}
+                {(d.white_space_title) && <div style={{ fontSize: FS.body, fontWeight: 700, color: C.p900, marginTop: 8 }}>{d.white_space_title}</div>}
+              </div></>}
+          />
+        </div>
+      )}
+
+      {sub === "gaps" && (
+        <div key="gaps" style={{ animation: "slideInRight .3s ease" }}>
+          <SectionLabel>Market gaps</SectionLabel>
+          {(d.market_gaps?.length ?? 0)>0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 8 }}>
+              {d.market_gaps.map((g, i) => (
+                <div key={i} style={{ background: C.p100, borderRadius: 10, padding: "12px 14px", animation: `slideInUp .35s ease ${i * .07}s both` }}>
+                  <div style={{ fontSize: FS.body, fontWeight: 700, color: C.p900, marginBottom: 4 }}>{g.title}</div>
+                  <div style={{ fontSize: FS.bodyXs, color: C.p700, lineHeight: 1.55 }}>{g.description}</div>
+                </div>
+              ))}
+            </div>
+          ) : <Card><div style={{ color: C.muted, fontSize: FS.bodySm }}>Geen gap data</div></Card>}
+        </div>
+      )}
     </div>
   );
 }

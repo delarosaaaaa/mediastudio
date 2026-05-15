@@ -92,7 +92,15 @@ function BudgetBar({ label, amount, pct, color, lightText = false }: { label: st
   );
 }
 
+const SEC_BUDGET_TABS = [
+  { key: "allocatie",   label: "Allocatie"    },
+  { key: "pacing",      label: "Pacing"       },
+  { key: "optimisation",label: "Optimisation" },
+] as const;
+type BudgetTab = typeof SEC_BUDGET_TABS[number]["key"];
+
 export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
+  const [sub, setSub] = useState<BudgetTab>("allocatie");
   const byFunnel = d.by_funnel || [];
   const byChannel = d.by_channel || [];
   const weeks = d.pacing?.weeks || [];
@@ -103,6 +111,22 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
 
   return (
     <div>
+      {/* Subtab nav */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 18, borderBottom: `.5px solid ${C.border}` }}>
+        {SEC_BUDGET_TABS.map(t => (
+          <button key={t.key} onClick={() => setSub(t.key)} style={{
+            padding: "6px 14px", border: "none", background: "transparent",
+            fontSize: FS.bodySm, fontWeight: sub === t.key ? 700 : 500,
+            color: sub === t.key ? C.p700 : C.muted, cursor: "pointer",
+            borderBottom: `2px solid ${sub === t.key ? C.p700 : "transparent"}`,
+            marginBottom: -1, transition: "color .2s",
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {sub === "allocatie" && (
+        <div key="allocatie" style={{ animation: "slideInRight .3s ease" }}>
+          {/* KPI strip + treemap + by funnel/channel bars */}
       {/* KPI strip */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 10 }}>
         {[
@@ -180,6 +204,65 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
             </div>
           </Card></>}
       />
+
+              </div>
+      )}
+
+      {sub === "pacing" && weeks.length > 0 && (
+        <div key="pacing" style={{ animation: "slideInRight .3s ease" }}>
+          <SectionLabel>Pacing wave — hover voor weekdetail</SectionLabel>
+          <Card style={{ marginBottom: 8 }}>
+            <WavePacing weeks={weeks} />
+            <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
+              {[["#1A0050","Burst"],[C.p700,"Peak"],[C.p600,"Always-on"]].map(([col,lbl]) => (
+                <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: col }} />
+                  <span style={{ fontSize: FS.bodyXs, color: C.muted }}>{lbl}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          {phases.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 8 }}>
+              {phases.map((ph, i) => (
+                <div key={i} style={{ background: C.white, borderRadius: 10, boxShadow: C.shadowSm, padding: "12px 14px", borderLeft: `3px solid ${ph.color || C.p700}` }}>
+                  <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 4 }}>{ph.weeks}</div>
+                  <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 3 }}>{ph.label}</div>
+                  <div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.5 }}>{ph.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {sub === "optimisation" && (
+        <div key="optimisation" style={{ animation: "slideInRight .3s ease" }}>
+          <Pair
+            left={<><SectionLabel>Optimisation rules</SectionLabel>
+              <Card style={{ padding: "0 14px" }}>
+                {optRules.map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 0", borderBottom: i < optRules.length - 1 ? `.5px solid ${C.border}` : "none" }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{r.icon}</div>
+                    <div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{r.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{r.desc}</div></div>
+                  </div>
+                ))}
+              </Card></>}
+            right={<><SectionLabel>Test agenda</SectionLabel>
+              <Card>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+                  {testItems.map((t, i) => (
+                    <div key={i} style={{ background: C.inset, borderRadius: 8, padding: "9px 11px" }}>
+                      <div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 4 }}>A/B test</div>
+                      <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{t.title}</div>
+                      <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.option_a} vs {t.option_b}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card></>}
+          />
+        </div>
+      )}
 
       <FeedbackBar phase="budget" outputRaw={raw} />
     </div>
