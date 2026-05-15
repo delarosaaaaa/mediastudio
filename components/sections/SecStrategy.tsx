@@ -90,8 +90,8 @@ function AnimCounter({ value, delay = 0 }: { value: string; delay?: number }) {
 }
 
 export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
-  const [sub, setSub] = useState("① Funnel");
-  const tabs = ["① Funnel", "② Channels", "③ Retargeting", "④ Metrics"];
+  const [sub, setSub] = useState("① Funnel & audience");
+  const tabs = ["① Funnel & audience", "② Channels & synergy", "③ Retargeting & metrics"];
   const stages = d.stages || [];
   const channels = (d.channels || []) as Channel[];
   const overlaps = (d.channel_overlap || []) as ChannelOverlap[];
@@ -107,7 +107,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
       <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
         {/* ── TAB 1: FUNNEL ── */}
-        {sub === tabs[0] && (
+        {(sub === tabs[0]) && (
           <div>
             {d.strategic_idea && (
               <div style={{ background: C.p900, borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
@@ -139,7 +139,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
         )}
 
         {/* ── TAB 2: CHANNELS ── */}
-        {sub === tabs[1] && (
+        {(sub === tabs[1]) && (
           <div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
               {channels.length > 0 && <div><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Channel synergy</div><ChannelNet channels={channels} overlaps={overlaps} /></div>}
@@ -160,7 +160,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
         )}
 
         {/* ── TAB 3: RETARGETING ── */}
-        {sub === tabs[2] && (
+        {(sub === tabs[2]) && (
           <div>
             {rules.length > 0 ? (
               <SCard delay={0}>
@@ -177,8 +177,10 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
         )}
 
         {/* ── TAB 4: METRICS ── */}
-        {sub === tabs[3] && (
+        
+          {/* ── Metrics ── */}
           <div>
+            {/* Metrics merged into this tab */}
             {d.north_star_kpi && (
               <div style={{ background: C.p900, borderRadius: 14, padding: "16px 20px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div><div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>North-star KPI</div><div style={{ fontSize: 20, fontWeight: 700, color: "#fff" }}>{d.north_star_kpi}</div>{d.north_star_desc && <div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.45)", marginTop: 3 }}>{d.north_star_desc}</div>}</div>
@@ -204,7 +206,6 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
               </SCard>
             )}
           </div>
-        )}
       </div>
       <FeedbackBar phase="strategy" outputRaw={raw} />
     </div>

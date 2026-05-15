@@ -61,9 +61,9 @@ function BubbleChart({ channels }: { channels: MediaChannel[] }) {
   );
 }
 export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
-  const [sub, setSub] = useState("① Overzicht");
+  const [sub, setSub] = useState("① Kanaalplan");
   const [filter, setFilter] = useState("all");
-  const tabs = ["① Overzicht", "② Kanaalplan", "③ Inzichten"];
+  const tabs = ["① Kanaalplan", "② Inzichten"];
   const channels = (d.channels || []) as MediaChannel[];
   const insights = (d.execution_insights || []) as ExecutionInsight[];
   const notes = d.optimisation_notes || [];
@@ -89,10 +89,12 @@ export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
           </div>
         )}
 
-        {sub === tabs[1] && (
-          <div>
-            <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-              {stages.map(s => <button key={s} onClick={() => setFilter(s)} style={{ padding: "4px 12px", borderRadius: 20, border: `.5px solid ${filter === s ? C.p700 : C.border}`, background: filter === s ? C.p100 : C.white, color: filter === s ? C.p700 : C.muted, fontSize: FS.bodyXs, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}>{s === "all" ? "Alle kanalen" : s}</button>)}
+        
+
+          {/* ── Kanaalplan ── */}
+          s => <button key={s} onClick={() => setFilter(s)} style={{ padding: "4px 12px", borderRadius: 20, border: `.5px solid ${filter === s ? C.p700 : C.border}`, background: filter === s ? C.p100 : C.white, color: filter === s ? C.p700 : C.muted, fontSize: FS.bodyXs, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}>{s === "all" ? "Alle kanalen" : s}</button>
+
+          
             </div>
             {filtered.map((ch, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr 110px", borderRadius: 12, overflow: "hidden", boxShadow: C.shadowSm, marginBottom: 7, animation: `slideInUp .35s ease ${i*.06}s both` }}>
@@ -116,7 +118,7 @@ export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
           </div>
         )}
 
-        {sub === tabs[2] && (
+        {sub === tabs[1] && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {insights.length > 0 && (
               <SCard delay={0}>

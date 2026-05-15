@@ -82,8 +82,8 @@ function BudgetBar({ label, amount, pct, color }: { label: string; amount: strin
   );
 }
 export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
-  const [sub, setSub] = useState("① Allocatie");
-  const tabs = ["① Allocatie", "② Pacing", "③ Optimisation"];
+  const [sub, setSub] = useState("① Allocatie & pacing");
+  const tabs = ["① Allocatie & pacing", "② Optimisation"];
   const byFunnel = d.by_funnel || [];
   const byChannel = d.by_channel || [];
   const weeks = d.pacing?.weeks || [];
@@ -120,10 +120,10 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
           </div>
         )}
 
-        {sub === tabs[1] && (
-          <div>
-            {weeks.length > 0 && (
-              <SCard delay={0}>
+        
+
+          {/* ── Pacing ── */}
+          <SCard delay={0}>
                 <div style={{ padding: "14px 16px 10px" }}>
                   <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 12 }}>Pacing wave — hover voor weekdetail</div>
                   <WavePacing weeks={weeks} />
@@ -132,7 +132,8 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
                   </div>
                 </div>
               </SCard>
-            )}
+
+          
             {phases.length > 0 && (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 9 }}>
                 {phases.map((ph, i) => (
@@ -150,7 +151,7 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
           </div>
         )}
 
-        {sub === tabs[2] && (
+        {sub === tabs[1] && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {optRules.length > 0 && (
               <SCard delay={0}>

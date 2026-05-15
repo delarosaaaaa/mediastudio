@@ -6,15 +6,7 @@ import { FeedbackBar } from "@/components/ui/primitives";
 import type { AudienceData, PersonaData, TotalAudienceData } from "@/lib/types";
 
 const COLS = [C.p900, C.p700, C.p600];
-
-function SCard({ children, accent, delay = 0 }: { children: ReactNode; accent?: string; delay?: number }) {
-  return (
-    <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .4s ease ${delay}s both` }}>
-      {accent && <div style={{ height: 3, background: accent, borderRadius: "14px 14px 0 0" }} />}
-      {children}
-    </div>
-  );
-}
+const RADAR_LABELS = ["Fee-pijn", "Switch-intent", "Digital-first", "Prijs-sensitief", "App-kwaliteit"];
 
 function SubNav({ tabs, active, onChange }: { tabs: string[]; active: string; onChange: (t: string) => void }) {
   return (
@@ -28,80 +20,207 @@ function SubNav({ tabs, active, onChange }: { tabs: string[]; active: string; on
   );
 }
 
-function radarPts(vals: number[], r: number, n: number) {
-  return vals.map((v, i) => { const a = (i / n) * Math.PI * 2 - Math.PI / 2; const rr = (v / 100) * r; return `${Math.cos(a) * rr},${Math.sin(a) * rr}`; }).join(" ");
-}
-
-function RadarMini({ dims, color }: { dims: number[]; color: string }) {
-  const n = dims.length; const r = 32;
+function SCard({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   return (
-    <svg width="72" height="72" viewBox="0 0 72 72"><g transform="translate(36,36)">
-      {[r, r*.75, r*.5, r*.25].map((rr, i) => <polygon key={i} points={Array.from({length:n}).map((_,j)=>{const a=(j/n)*Math.PI*2-Math.PI/2;return `${Math.cos(a)*rr},${Math.sin(a)*rr}`;}).join(" ")} fill="none" stroke={C.border} strokeWidth=".5"/>)}
-      {Array.from({length:n}).map((_,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;return <line key={i} x1="0" y1="0" x2={Math.cos(a)*r} y2={Math.sin(a)*r} stroke={C.border} strokeWidth=".5"/>;})}
-      <polygon points={radarPts(dims,r,n)} fill={color} opacity=".25" stroke={color} strokeWidth="1.5"/>
-      {dims.map((d,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;const rr=(d/100)*r;return <circle key={i} cx={Math.cos(a)*rr} cy={Math.sin(a)*rr} r="3" fill={color}/>;})}
-    </g></svg>
+    <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", marginBottom: 10, animation: `slideInUp .4s ease ${delay}s both` }}>
+      {children}
+    </div>
   );
 }
 
+// ─── Radar with labels ────────────────────────────────────────
+function RadarChart({ dims, color }: { dims: number[]; color: string }) {
+  const n = dims.length; const r = 52; const cx = 80; const cy = 70;
+  function pt(val: number, i: number) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const rr = (val / 100) * r;
+    return { x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr };
+  }
+  function ptOuter(i: number) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+  }
+  function ptLabel(i: number) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    return { x: cx + Math.cos(a) * (r + 18), y: cy + Math.sin(a) * (r + 18) };
+  }
+  const dataPts = dims.map((d, i) => pt(d, i));
+  const polygon = dataPts.map(p => `${p.x},${p.y}`).join(" ");
+  return (
+    <svg width="160" height="140" viewBox="0 0 160 140">
+      {/* Grid rings */}
+      {[r, r * .75, r * .5, r * .25].map((rr, ri) => (
+        <polygon key={ri}
+          points={Array.from({ length: n }).map((_, i) => { const a = (i / n) * Math.PI * 2 - Math.PI / 2; return `${cx + Math.cos(a) * rr},${cy + Math.sin(a) * rr}`; }).join(" ")}
+          fill="none" stroke={C.border} strokeWidth=".5"
+        />
+      ))}
+      {/* Axis lines */}
+      {Array.from({ length: n }).map((_, i) => {
+        const o = ptOuter(i);
+        return <line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke={C.border} strokeWidth=".5" />;
+      })}
+      {/* Data polygon */}
+      <polygon points={polygon} fill={color} opacity=".2" stroke={color} strokeWidth="1.5" />
+      {/* Data points */}
+      {dataPts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3.5" fill={color} />)}
+      {/* Labels */}
+      {RADAR_LABELS.slice(0, n).map((lbl, i) => {
+        const lp = ptLabel(i);
+        return (
+          <text key={i} x={lp.x} y={lp.y} textAnchor="middle" dominantBaseline="middle"
+            fontSize="8" fill={C.muted} fontFamily="-apple-system,sans-serif">
+            {lbl}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Persona flip card ────────────────────────────────────────
 function PersonaFlip({ p, index }: { p: PersonaData; index: number }) {
   const [flipped, setFlipped] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const col = COLS[index % 3];
   const dims = [
-    Math.min(100, 55 + (p.pain_points?.length ?? 0) * 8),
-    Math.min(100, 50 + (p.motivations?.length ?? 0) * 7),
-    Math.min(100, 65 + index * 5),
-    Math.min(100, 60 + index * 4),
-    Math.min(100, 55 + (p.platforms?.length ?? 0) * 6),
+    Math.min(100, 50 + (p.pain_points?.length ?? 0) * 9),
+    Math.min(100, 55 + (p.motivations?.length ?? 0) * 7),
+    Math.min(100, 60 + index * 8),
+    Math.min(100, 55 + index * 6),
+    Math.min(100, 50 + (p.platforms?.length ?? 0) * 7),
   ];
   const initials = p.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() ?? "??";
-  return (
-    <div onClick={() => setFlipped(f => !f)} style={{ perspective: 900, cursor: "pointer", animation: `slideInUp .4s ease ${index * .1}s both` }}>
-      <div style={{ position: "relative", height: 280, transition: "transform .52s cubic-bezier(.4,0,.2,1)", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "none" }}>
-        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.white, borderRadius: 14, boxShadow: C.shadow, display: "flex", flexDirection: "column", padding: 18 }}>
-          {p.recommended && <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: col, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>★ Recommended</div>}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: C.inset, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: col, flexShrink: 0 }}>{initials}</div>
-            <div><div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{p.name}</div><div style={{ fontSize: FS.bodySm, color: C.muted }}>{p.age}{p.job ? ` · ${p.job}` : ""}</div></div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", flex: 1 }}><RadarMini dims={dims} color={col} /></div>
-          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 10 }}>
-            {p.platforms?.slice(0, 3).map((pl, i) => <span key={i} style={{ padding: "2px 8px", background: C.inset, borderRadius: 20, fontSize: FS.bodyXs, color: C.muted }}>{pl}</span>)}
-          </div>
-          <div style={{ marginTop: 8, fontSize: FS.bodyXs, color: C.faint, textAlign: "center" }}>Klik voor pain points →</div>
-        </div>
-        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: col, borderRadius: 14, padding: 18, transform: "rotateY(180deg)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: "rgba(255,255,255,.4)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 12 }}>Pain points</div>
-          {p.pain_points?.slice(0, 3).map((pp, i) => <div key={i} style={{ display: "flex", gap: 8, marginBottom: 9, alignItems: "flex-start" }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,.4)", marginTop: 6, flexShrink: 0 }} /><div style={{ fontSize: FS.bodySm, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{pp}</div></div>)}
-          {p.trigger_moments?.[0] && <div style={{ marginTop: 10, padding: "8px 10px", background: "rgba(255,255,255,.1)", borderRadius: 8 }}><div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.5)", marginBottom: 3 }}>Trigger moment</div><div style={{ fontSize: FS.bodySm, color: "rgba(255,255,255,.8)" }}>{p.trigger_moments[0]}</div></div>}
-          <div style={{ marginTop: "auto", fontSize: FS.bodyXs, color: "rgba(255,255,255,.35)", textAlign: "center" }}>↩ Klik om terug te draaien</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-
-function BarrierFlip({ barrier, solution, index }: { barrier: string; solution: string; index: number }) {
-  const [flipped, setFlipped] = useState(false);
   return (
-    <div onClick={() => setFlipped(f => !f)} style={{ perspective: 900, height: 100, cursor: "pointer", animation: `slideInUp .35s ease ${index * .07}s both` }}>
-      <div style={{ position: "relative", width: "100%", height: "100%", transition: "transform .48s cubic-bezier(.4,0,.2,1)", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "none" }}>
-        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden" }}>
-          <div style={{ height: 3, background: C.inset, borderRadius: "14px 14px 0 0" }} />
-          <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div>
-              <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>Barrier</div>
-              <div style={{ fontSize: FS.bodyLg, fontWeight: 500, color: C.ink }}>{barrier}</div>
+    <div
+      onClick={() => setFlipped(f => !f)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ perspective: 1000, cursor: "pointer", animation: `slideInUp .4s ease ${index * .1}s both` }}
+    >
+      <div style={{
+        position: "relative", height: 460,
+        transition: "transform .55s cubic-bezier(.4,0,.2,1)",
+        transformStyle: "preserve-3d",
+        transform: flipped ? "rotateY(180deg)" : hovered ? "rotateY(-4deg) scale(1.01)" : "none",
+      }}>
+        {/* ── FRONT ── */}
+        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.white, borderRadius: 16, boxShadow: C.shadow, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Color bar */}
+          <div style={{ height: 4, background: col, flexShrink: 0 }} />
+          <div style={{ padding: "16px 18px", flex: 1, display: "flex", flexDirection: "column" }}>
+            {/* Header */}
+            {p.recommended && (
+              <div style={{ fontSize: 9, fontWeight: 700, color: col, textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 8 }}>★ Aanbevolen segment</div>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: `${col}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, color: col, flexShrink: 0 }}>
+                {initials}
+              </div>
+              <div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: C.ink, marginBottom: 3 }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: C.muted }}>{p.age}{p.job ? ` · ${p.job}` : ""}</div>
+                {p.income && <div style={{ fontSize: 11, color: C.muted }}>{p.income}</div>}
+              </div>
             </div>
-            <div style={{ fontSize: FS.bodyXs, color: C.faint }}>→ klik voor antwoord</div>
+
+            {/* Radar */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+              <RadarChart dims={dims} color={col} />
+            </div>
+
+            {/* Platforms */}
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+              {p.platforms?.slice(0, 4).map((pl, i) => (
+                <span key={i} style={{ padding: "3px 9px", background: C.inset, borderRadius: 20, fontSize: 11, color: C.muted }}>{pl}</span>
+              ))}
+            </div>
+
+            {/* Mindset */}
+            {p.mindset && (
+              <div style={{ fontSize: 12, color: C.body, lineHeight: 1.55, fontStyle: "italic", marginBottom: 10 }}>"{p.mindset}"</div>
+            )}
+
+            {/* Flip cue */}
+            <div style={{
+              marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              padding: "8px 0", borderTop: `.5px solid ${C.border}`,
+              fontSize: 11, color: col, fontWeight: 500,
+              opacity: hovered ? 1 : 0.5, transition: "opacity .2s",
+            }}>
+              <span style={{ fontSize: 14, display: "inline-block", transform: hovered ? "rotate(15deg)" : "none", transition: "transform .3s" }}>⟳</span>
+              Klik voor pain points & motivaties
+            </div>
           </div>
         </div>
-        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.p900, borderRadius: 14, transform: "rotateY(180deg)", overflow: "hidden" }}>
-          <div style={{ height: 3, background: C.p700, borderRadius: "14px 14px 0 0" }} />
-          <div style={{ padding: "14px 18px" }}>
-            <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: "rgba(255,255,255,.4)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>Vault's antwoord</div>
-            <div style={{ fontSize: FS.bodyLg, fontWeight: 500, color: "#fff" }}>{solution}</div>
+
+        {/* ── BACK ── */}
+        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: col, borderRadius: 16, transform: "rotateY(180deg)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ height: 4, background: "rgba(255,255,255,.2)", flexShrink: 0 }} />
+          <div style={{ padding: "16px 18px", flex: 1, overflowY: "auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{initials}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{p.name}</div>
+            </div>
+
+            {/* Pain points */}
+            {(p.pain_points?.length ?? 0) > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 8 }}>Pain points</div>
+                {p.pain_points.map((pp, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 7, alignItems: "flex-start" }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,.4)", marginTop: 6, flexShrink: 0 }} />
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{pp}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Motivations */}
+            {(p.motivations?.length ?? 0) > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 8 }}>Motivaties</div>
+                {p.motivations.map((m, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 7, alignItems: "flex-start" }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,.4)", marginTop: 6, flexShrink: 0 }} />
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{m}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Trigger */}
+            {p.trigger_moments?.[0] && (
+              <div style={{ marginBottom: 12, padding: "10px 12px", background: "rgba(255,255,255,.12)", borderRadius: 10 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 5 }}>Trigger moment</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{p.trigger_moments[0]}</div>
+              </div>
+            )}
+
+            {/* Trust builders */}
+            {(p.trust_builders?.length ?? 0) > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 8 }}>Trust builders</div>
+                {p.trust_builders!.map((tb, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, marginBottom: 5 }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,.4)", marginTop: 5, flexShrink: 0 }} />
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,.8)", lineHeight: 1.5 }}>{tb}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Purchase trigger */}
+            {p.purchase_trigger && (
+              <div style={{ padding: "10px 12px", background: "rgba(255,255,255,.12)", borderRadius: 10 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.45)", textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 5 }}>Purchase trigger</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{p.purchase_trigger}</div>
+              </div>
+            )}
+          </div>
+          <div style={{ padding: "10px 18px", borderTop: ".5px solid rgba(255,255,255,.15)", fontSize: 11, color: "rgba(255,255,255,.35)", textAlign: "center" }}>
+            ↩ Klik om terug te draaien
           </div>
         </div>
       </div>
@@ -109,10 +228,28 @@ function BarrierFlip({ barrier, solution, index }: { barrier: string; solution: 
   );
 }
 
+// ─── Barrier card — always visible ───────────────────────────
+function BarrierCard({ barrier, solution, index }: { barrier: string; solution: string; index: number }) {
+  return (
+    <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .35s ease ${index * .07}s both` }}>
+      <div style={{ padding: "16px 18px", borderBottom: `.5px solid ${C.border}` }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 8 }}>Barrier</div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: C.ink, lineHeight: 1.5 }}>{barrier}</div>
+      </div>
+      <div style={{ padding: "14px 18px", background: C.p100 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: C.p700, textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 8 }}>Vault's antwoord</div>
+        <div style={{ fontSize: 13, fontWeight: 500, color: C.p900, lineHeight: 1.55 }}>{solution}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────
 export function SecAudience({ d, raw }: { d: AudienceData; raw: string }) {
   const [sub, setSub] = useState("① Totaalbeeld");
   const tabs = ["① Totaalbeeld", "② Personas", "③ Barriers & responses"];
   const t = d.total as TotalAudienceData;
+  const personas = d.personas || [];
 
   return (
     <div>
@@ -121,57 +258,91 @@ export function SecAudience({ d, raw }: { d: AudienceData; raw: string }) {
       <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
         {/* ── TAB 1: TOTAALBEELD ── */}
-        {sub === tabs[0] && (
+        {sub === tabs[0] && t && (
           <div>
-            {t && (
-              <>
-                {/* Hero */}
-                <SCard delay={0}>
-                  <div style={{ padding: "18px 20px", borderBottom: `.5px solid ${C.border}`, display: "flex", alignItems: "center", gap: 14 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: C.p700, flexShrink: 0 }}>
-                      {String(d.personas?.length ?? 0)}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 2 }}>Total Audience</div>
-                      <div style={{ fontSize: FS.bodySm, color: C.muted }}>{t.age_range}{t.jobs ? ` · ${t.jobs}` : ""}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)" }}>
-                    {[["Geschatte omvang", t.size_estimate], ["Inkomen", t.income], ["Media/dag", t.daily_media_hours]].filter(([,v]) => v).map(([l, v], i, arr) => (
-                      <div key={l as string} style={{ padding: "12px 16px", borderRight: i < arr.length - 1 ? `.5px solid ${C.border}` : "none" }}>
-                        <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 4 }}>{l as string}</div>
-                        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{v as string}</div>
-                      </div>
-                    ))}
-                  </div>
-                </SCard>
-                {/* Motivations + Pain points */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-                  <SCard delay={0.08}>
-                    <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Motivaties</div></div>
-                    {(t.motivations || []).map((m, i) => <div key={i} style={{ display: "flex", gap: 8, padding: "8px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }} /><div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{m}</div></div>)}
-                  </SCard>
-                  <SCard delay={0.12}>
-                    <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Pain points</div></div>
-                    {(t.pain_points || []).map((m, i) => <div key={i} style={{ display: "flex", gap: 8, padding: "8px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: C.muted, marginTop: 5, flexShrink: 0 }} /><div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{m}</div></div>)}
-                  </SCard>
+            {/* Hero */}
+            <SCard delay={0}>
+              <div style={{ padding: "20px 22px", borderBottom: `.5px solid ${C.border}`, display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, color: C.p700, flexShrink: 0 }}>
+                  {personas.length}
                 </div>
-              </>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Total Audience</div>
+                  <div style={{ fontSize: 13, color: C.muted }}>{t.age_range}{t.jobs ? ` · ${t.jobs}` : ""}</div>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)" }}>
+                {[["Geschatte omvang", t.size_estimate], ["Inkomen", t.income], ["Media per dag", t.daily_media_hours]].filter(([, v]) => v).map(([l, v], i, arr) => (
+                  <div key={l as string} style={{ padding: "16px 20px", borderRight: i < arr.length - 1 ? `.5px solid ${C.border}` : "none" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 6 }}>{l as string}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.ink }}>{v as string}</div>
+                  </div>
+                ))}
+              </div>
+            </SCard>
+
+            {/* Personas link */}
+            {personas.length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Persona's binnen dit segment</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {personas.map((p, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: C.white, borderRadius: 12, boxShadow: C.shadowSm, flex: 1, animation: `slideInUp .35s ease ${i * .07}s both` }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${COLS[i % 3]}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: COLS[i % 3], flexShrink: 0 }}>
+                        {p.name?.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{p.name}</div>
+                        <div style={{ fontSize: 11, color: C.muted }}>{p.age}{p.job ? ` · ${p.job}` : ""}</div>
+                      </div>
+                      {p.recommended && <div style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, color: COLS[i % 3], textTransform: "uppercase" as const, letterSpacing: ".08em" }}>★ Primary</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
+
+            {/* Motivations + Pain points */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <SCard delay={0.08}>
+                <div style={{ padding: "16px 18px 0" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 12 }}>Motivaties</div>
+                </div>
+                {(t.motivations || []).map((m, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 18px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.p700, marginTop: 6, flexShrink: 0 }} />
+                    <div style={{ fontSize: 13, color: C.body, lineHeight: 1.6 }}>{m}</div>
+                  </div>
+                ))}
+              </SCard>
+              <SCard delay={0.12}>
+                <div style={{ padding: "16px 18px 0" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 12 }}>Pain points</div>
+                </div>
+                {(t.pain_points || []).map((m, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 18px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.muted, marginTop: 6, flexShrink: 0 }} />
+                    <div style={{ fontSize: 13, color: C.body, lineHeight: 1.6 }}>{m}</div>
+                  </div>
+                ))}
+              </SCard>
+            </div>
           </div>
         )}
 
         {/* ── TAB 2: PERSONAS ── */}
         {sub === tabs[1] && (
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(d.personas?.length ?? 1, 3)},1fr)`, gap: 12 }}>
-            {(d.personas || []).map((p, i) => <PersonaFlip key={i} p={p} index={i} />)}
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(personas.length, 3)}, 1fr)`, gap: 14 }}>
+            {personas.map((p, i) => <PersonaFlip key={i} p={p} index={i} />)}
           </div>
         )}
 
         {/* ── TAB 3: BARRIERS ── */}
         {sub === tabs[2] && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {(d.barriers || []).map((b, i) => <BarrierFlip key={i} barrier={b.barrier} solution={b.solution} index={i} />)}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+            {(d.barriers || []).map((b, i) => (
+              <BarrierCard key={i} barrier={b.barrier} solution={b.solution} index={i} />
+            ))}
           </div>
         )}
       </div>
