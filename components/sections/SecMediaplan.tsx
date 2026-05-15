@@ -76,6 +76,7 @@ export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
       <SubNav tabs={tabs} active={sub} onChange={setSub} />
       <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
+        {/* ── TAB 1: KANAALPLAN ── */}
         {sub === tabs[0] && (
           <div>
             <KpiStrip items={[["Budget", t?.budget ? `€${(t.budget/1e6).toFixed(1)}M` : "—"], ["Impressions", t?.impressions ? fmtM(t.impressions) : "—"], ["Clicks", t?.clicks ? fmtM(t.clicks) : "—"], ["Conversions", t?.conversions ? fmtM(t.conversions) : "—"], ["Blended CPA", t?.blended_cpa ? fmtE(t.blended_cpa) : "—"]]} />
@@ -86,15 +87,12 @@ export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
                 <BubbleChart channels={channels} />
               </div>
             </SCard>
-          </div>
-        )}
-
-        
-
-          {/* ── Kanaalplan ── */}
-          s => <button key={s} onClick={() => setFilter(s)} style={{ padding: "4px 12px", borderRadius: 20, border: `.5px solid ${filter === s ? C.p700 : C.border}`, background: filter === s ? C.p100 : C.white, color: filter === s ? C.p700 : C.muted, fontSize: FS.bodyXs, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}>{s === "all" ? "Alle kanalen" : s}</button>
-
-          
+            <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+              {stages.map(s => (
+                <button key={s} onClick={() => setFilter(s)} style={{ padding: "4px 12px", borderRadius: 20, border: `.5px solid ${filter === s ? C.p700 : C.border}`, background: filter === s ? C.p100 : C.white, color: filter === s ? C.p700 : C.muted, fontSize: FS.bodyXs, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}>
+                  {s === "all" ? "Alle kanalen" : s}
+                </button>
+              ))}
             </div>
             {filtered.map((ch, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr 110px", borderRadius: 12, overflow: "hidden", boxShadow: C.shadowSm, marginBottom: 7, animation: `slideInUp .35s ease ${i*.06}s both` }}>
@@ -111,25 +109,41 @@ export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
                   <div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{ch.targeting}</div>
                 </div>
                 <div style={{ background: C.inset, padding: "12px 13px", borderLeft: `.5px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, alignContent: "start" }}>
-                  {[["CPM", `€${ch.cpm?.toFixed(2)}`],["CTR", fmtP(ch.ctr)],["Conv.", fmtM(ch.conversions)],["CPA", fmtE(ch.cpa)]].map(([k,v]) => <div key={k as string}><div style={{ fontSize: 8, fontWeight: 700, color: C.muted, marginBottom: 2 }}>{k as string}</div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{v as string}</div></div>)}
+                  {[["CPM", `€${ch.cpm?.toFixed(2)}`],["CTR", fmtP(ch.ctr)],["Conv.", fmtM(ch.conversions)],["CPA", fmtE(ch.cpa)]].map(([k,v]) => (
+                    <div key={k as string}>
+                      <div style={{ fontSize: 8, fontWeight: 700, color: C.muted, marginBottom: 2 }}>{k as string}</div>
+                      <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{v as string}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* ── TAB 2: INZICHTEN ── */}
         {sub === tabs[1] && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {insights.length > 0 && (
               <SCard delay={0}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Key insights</div></div>
-                {insights.map((ins,i) => <div key={i} style={{ display: "flex", gap: 10, padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{ins.icon}</div><div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{ins.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{ins.desc}</div></div></div>)}
+                {insights.map((ins,i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{ins.icon}</div>
+                    <div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{ins.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{ins.desc}</div></div>
+                  </div>
+                ))}
               </SCard>
             )}
             {notes.length > 0 && (
               <SCard delay={0.07}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Optimisation approach</div></div>
-                {notes.map((n,i) => <div key={i} style={{ display: "flex", gap: 8, padding: "9px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }}/><div style={{ fontSize: FS.bodySm, color: C.muted, lineHeight: 1.55 }}>{n}</div></div>)}
+                {notes.map((n,i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, padding: "9px 16px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 5, flexShrink: 0 }}/>
+                    <div style={{ fontSize: FS.bodySm, color: C.muted, lineHeight: 1.55 }}>{n}</div>
+                  </div>
+                ))}
               </SCard>
             )}
           </div>

@@ -106,7 +106,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
       <SubNav tabs={tabs} active={sub} onChange={setSub} />
       <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
-        {/* ── TAB 1: FUNNEL ── */}
+        {/* ── TAB 1: FUNNEL & AUDIENCE ── */}
         {(sub === tabs[0]) && (
           <div>
             {d.strategic_idea && (
@@ -138,7 +138,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
           </div>
         )}
 
-        {/* ── TAB 2: CHANNELS ── */}
+        {/* ── TAB 2: CHANNELS & SYNERGY ── */}
         {(sub === tabs[1]) && (
           <div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
@@ -159,9 +159,10 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
           </div>
         )}
 
-        {/* ── TAB 3: RETARGETING ── */}
+        {/* ── TAB 3: RETARGETING & METRICS ── */}
         {(sub === tabs[2]) && (
           <div>
+            <div>
             {rules.length > 0 ? (
               <SCard delay={0}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Retargeting rules</div></div>
@@ -174,12 +175,7 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
               </SCard>
             )}
           </div>
-        )}
-
-        {/* ── TAB 4: METRICS ── */}
-        
-          {/* ── Metrics ── */}
-          <div>
+            {/* ── Metrics ── */}
             {/* Metrics merged into this tab */}
             {d.north_star_kpi && (
               <div style={{ background: C.p900, borderRadius: 14, padding: "16px 20px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -206,6 +202,10 @@ export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
               </SCard>
             )}
           </div>
+      </div>
+      <FeedbackBar phase="strategy" outputRaw={raw} />
+          </div>
+        )}
       </div>
       <FeedbackBar phase="strategy" outputRaw={raw} />
     </div>

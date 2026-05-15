@@ -95,6 +95,7 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
       <SubNav tabs={tabs} active={sub} onChange={setSub} />
       <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
 
+        {/* ── TAB 1: ALLOCATIE & PACING ── */}
         {sub === tabs[0] && (
           <div>
             <KpiStrip items={[["Totaal budget", fmtK(d.total_budget)], ["Netto media", fmtK(d.net_budget)], ["Test budget", `${fmtK(d.test_budget?.amount ?? 0)} (${d.test_budget?.pct ?? 0}%)`], ["Kanalen", String(byChannel.length)]]} />
@@ -103,7 +104,7 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
                 <div style={{ padding: "14px 16px 10px" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>Budget allocatie</div><Treemap channels={byChannel} /></div>
               </SCard>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
               {byFunnel.length > 0 && (
                 <SCard delay={0.1}>
                   <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>By funnel stage</div></div>
@@ -117,23 +118,22 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
                 </SCard>
               )}
             </div>
-          </div>
-        )}
-
-        
-
-          {/* ── Pacing ── */}
-          <SCard delay={0}>
+            {weeks.length > 0 && (
+              <SCard delay={0.18}>
                 <div style={{ padding: "14px 16px 10px" }}>
                   <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 12 }}>Pacing wave — hover voor weekdetail</div>
                   <WavePacing weeks={weeks} />
                   <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
-                    {[["#1A0050","Burst"],[C.p700,"Peak"],[C.p600,"Always-on"]].map(([col,lbl]) => <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 8, height: 8, borderRadius: 2, background: col }}/><span style={{ fontSize: FS.bodyXs, color: C.muted }}>{lbl}</span></div>)}
+                    {[["#1A0050","Burst"],[C.p700,"Peak"],[C.p600,"Always-on"]].map(([col,lbl]) => (
+                      <div key={lbl as string} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: 2, background: col as string }}/>
+                        <span style={{ fontSize: FS.bodyXs, color: C.muted }}>{lbl as string}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </SCard>
-
-          
+            )}
             {phases.length > 0 && (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 9 }}>
                 {phases.map((ph, i) => (
@@ -151,12 +151,18 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
           </div>
         )}
 
+        {/* ── TAB 2: OPTIMISATION ── */}
         {sub === tabs[1] && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {optRules.length > 0 && (
               <SCard delay={0}>
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Optimisation rules</div></div>
-                {optRules.map((r, i) => <div key={i} style={{ display: "flex", gap: 10, padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}><div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{r.icon}</div><div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{r.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{r.desc}</div></div></div>)}
+                {optRules.map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "10px 16px", borderTop: `.5px solid ${C.border}` }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{r.icon}</div>
+                    <div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{r.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{r.desc}</div></div>
+                  </div>
+                ))}
               </SCard>
             )}
             {testItems.length > 0 && (
@@ -164,7 +170,13 @@ export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
                 <div style={{ padding: "14px 16px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em" }}>Test agenda</div></div>
                 <div style={{ padding: "10px 16px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-                    {testItems.map((t, i) => <div key={i} style={{ background: C.inset, borderRadius: 9, padding: "10px 12px" }}><div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 4 }}>A/B test</div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{t.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.option_a} vs {t.option_b}</div></div>)}
+                    {testItems.map((t, i) => (
+                      <div key={i} style={{ background: C.inset, borderRadius: 9, padding: "10px 12px" }}>
+                        <div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 4 }}>A/B test</div>
+                        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{t.title}</div>
+                        <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.option_a} vs {t.option_b}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </SCard>
