@@ -1,255 +1,185 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { C, FS } from "@/lib/tokens";
-import { Card, KpiCard, FeedbackBar, Pair, SectionLabel, BulletItem, Divider } from "@/components/ui/primitives";
+import { KpiCard, Card, CardLabel, FeedbackBar, Pair, SectionLabel } from "@/components/ui/primitives";
 import { fmtK } from "@/lib/format";
 import type { BudgetData, PacingWeek, OptimisationRule, TestItem } from "@/lib/types";
 
 const PHASE_COLS = [C.p900, C.p700, C.p600, C.p300];
 
-// ─── Budget bar row ───────────────────────────────────────────
-function BudgetBar({ label, amount, pct, color, lightText = false }: {
-  label: string; amount: string; pct: number; color: string; lightText?: boolean;
-}) {
+function fmtE(n: number) { return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(n); }
+
+// Treemap budget allocation
+function Treemap({ channels }: { channels: BudgetData["by_channel"] }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const sorted = [...channels].sort((a, b) => b.budget - a.budget);
+  const total = sorted.reduce((s, c) => s + c.budget, 0);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 9 }}>
-      <div style={{ fontSize: FS.bodySm, color: C.body, width: 100, flexShrink: 0 }}>{label}</div>
-      <div style={{ flex: 1, height: 24, borderRadius: 7, overflow: "hidden" }}>
-        <div style={{ width: `${Math.max(pct, 5)}%`, height: "100%", background: color, borderRadius: 7, display: "flex", alignItems: "center", paddingLeft: 10 }}>
-          <span style={{ fontSize: FS.bodySm, fontWeight: 500, color: lightText ? C.p900 : "#fff", whiteSpace: "nowrap" }}>{amount}</span>
-        </div>
-      </div>
-      <div style={{ fontSize: FS.bodySm, color: C.muted, width: 28, textAlign: "right", flexShrink: 0 }}>{pct}%</div>
+    <div style={{ display: "flex", gap: 4, height: 90, borderRadius: 10, overflow: "hidden" }}>
+      {sorted.map((ch, i) => {
+        const flex = (ch.budget / total) * 100;
+        const isHov = hovered === ch.channel;
+        const col = PHASE_COLS[i % 4];
+        const lightText = i >= 3;
+        return (
+          <div key={i}
+            onMouseEnter={() => setHovered(ch.channel)}
+            onMouseLeave={() => setHovered(null)}
+            style={{ flex, background: col, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", borderRadius: 6, filter: isHov ? "brightness(1.15)" : "none", transform: isHov ? "scaleY(1.05)" : "none", transition: "filter .2s, transform .2s" }}>
+            {flex > 8 && <span style={{ fontSize: 9, fontWeight: 700, color: lightText ? "#3C3489" : "rgba(255,255,255,.85)", textAlign: "center" }}>{ch.channel.split(" ")[0]}</span>}
+            {flex > 12 && <span style={{ fontSize: 10, fontWeight: 700, color: lightText ? "#3C3489" : "#fff" }}>{fmtK(ch.budget)}</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-// ─── 2. Budget allocation ─────────────────────────────────────
-function BudgetAllocation({ d }: { d: BudgetData }) {
-  const byFunnel  = d.by_funnel  || [];
-  const byChannel = d.by_channel || [];
-  const rationale = d.budget_rationale || [];
+// Wave pacing chart
+function WavePacing({ weeks }: { weeks: PacingWeek[] }) {
+  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const phaseColors: Record<string, string> = { burst: C.p900, peak: C.p700, "always-on": C.p600, retentie: C.p600 };
+  const W = 500, H = 70, pad = 10;
+  const maxBudget = Math.max(...weeks.map(w => w.budget));
+  const pts = weeks.map((w, i) => [pad + i * ((W - pad * 2) / (weeks.length - 1)), H - pad - ((w.budget / maxBudget) * (H - pad * 2))]);
 
   return (
-    <Pair
-      left={
-        <>
-          <SectionLabel>2a — By funnel stage</SectionLabel>
-          <Card fill>
-            {byFunnel.map((f, i) => (
-              <BudgetBar
-                key={i}
-                label={f.stage}
-                amount={fmtK(f.budget)}
-                pct={f.pct}
-                color={PHASE_COLS[i % 4]}
-                lightText={i === 3}
-              />
-            ))}
-            {rationale.length > 0 && (
-              <>
-                <Divider />
-                <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 8 }}>Budget rationale</div>
-                {rationale.map((r, i) => <BulletItem key={i} text={r} />)}
-              </>
-            )}
-          </Card>
-        </>
-      }
-      right={
-        <>
-          <SectionLabel>2b — By channel</SectionLabel>
-          <Card fill>
-            {byChannel.map((ch, i) => (
-              <BudgetBar
-                key={i}
-                label={ch.channel}
-                amount={fmtK(ch.budget)}
-                pct={ch.pct}
-                color={PHASE_COLS[i % 4]}
-                lightText={PHASE_COLS[i % 4] === C.p300}
-              />
-            ))}
-          </Card>
-        </>
-      }
-    />
-  );
-}
-
-// ─── 3. Pacing strategy ───────────────────────────────────────
-function PacingStrategy({ d }: { d: BudgetData }) {
-  const [selWeek, setSelWeek] = useState<number | null>(null);
-  const weeks  = d.pacing?.weeks || [];
-  const phases = d.pacing?.phases || [];
-  const maxW   = Math.max(...weeks.map(w => w.budget || 0), 1);
-  const BAR_H  = 80;
-  const selW   = selWeek !== null ? weeks[selWeek] : null;
-
-  // Determine bar colour from week phase
-  function barColor(w: PacingWeek, idx: number): string {
-    const p = (w.phase || "").toLowerCase();
-    if (p.includes("burst") || p.includes("awareness")) return C.p900;
-    if (p.includes("peak") || p.includes("performance")) return C.p700;
-    return C.p600;
-  }
-
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <SectionLabel>3 — Pacing strategy</SectionLabel>
-      <Card fill>
-        {/* Chart */}
-        {weeks.length > 0 && (
-          <>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: BAR_H, marginBottom: 6 }}>
-              {weeks.map((w, i) => {
-                const h       = Math.max(Math.round(((w.budget || 0) / maxW) * BAR_H), 4);
-                const col     = barColor(w, i);
-                const isSel   = selWeek === i;
-                const dimmed  = selWeek !== null && !isSel;
-                return (
-                  <div
-                    key={i}
-                    onClick={() => setSelWeek(isSel ? null : i)}
-                    style={{
-                      flex: 1, height: `${h}px`, background: col,
-                      borderRadius: "3px 3px 0 0", cursor: "pointer",
-                      outline: isSel ? `2px solid ${C.ink}` : "none",
-                      opacity: dimmed ? 0.35 : 1, transition: "opacity .15s",
-                    }}
-                  />
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: FS.bodyXs, color: C.muted, marginBottom: selW ? 10 : 0 }}>
-              <span>Week 1</span><span>Week {weeks.length}</span>
-            </div>
-            {selW && (
-              <div style={{ background: C.p100, borderRadius: 9, padding: "10px 14px", borderLeft: `3px solid ${C.p700}`, marginBottom: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                  <span style={{ fontSize: FS.bodySm, fontWeight: 700, color: C.p700 }}>Week {selW.week}</span>
-                  <span style={{ fontSize: FS.bodySm, color: C.p600 }}>{selW.phase}</span>
-                  <span style={{ fontSize: FS.bodyLg, fontWeight: 500, color: C.ink, marginLeft: "auto" }}>{fmtK(selW.budget)}</span>
-                </div>
-                <div style={{ fontSize: FS.bodySm, color: C.body }}>{selW.focus}</div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Legend */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: phases.length > 0 ? 12 : 0 }}>
-          {[[C.p900, "Awareness burst"], [C.p700, "Peak performance"], [C.p600, "Always-on"]].map(([col, lbl]) => (
-            <div key={lbl as string} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: col as string }} />
-              <span style={{ fontSize: FS.bodyXs, color: C.muted }}>{lbl as string}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Phase descriptions */}
-        {phases.length > 0 && (
-          <>
-            <Divider />
-            {phases.map((ph, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "9px 0", borderBottom: i < phases.length - 1 ? `0.5px solid ${C.border}` : "none" }}>
-                <span style={{ padding: "3px 9px", background: C.p100, color: ph.color || C.p700, borderRadius: 20, fontSize: FS.bodyXs, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0 }}>
-                  {ph.weeks}
-                </span>
-                <div style={{ fontSize: FS.bodySm, color: C.muted, lineHeight: 1.55 }}>{ph.description}</div>
-              </div>
-            ))}
-          </>
-        )}
-      </Card>
-    </div>
-  );
-}
-
-// ─── 4. Optimisation logic ────────────────────────────────────
-function OptimisationLogic({ rules }: { rules: OptimisationRule[] }) {
-  return (
-    <Card style={{ padding: "0 16px" }}>
-      {rules.map((r, i) => (
-        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 0", borderBottom: i < rules.length - 1 ? `0.5px solid ${C.border}` : "none" }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
-            {r.icon}
-          </div>
-          <div>
-            <div style={{ fontSize: FS.body, fontWeight: 500, color: C.ink, marginBottom: 2 }}>{r.title}</div>
-            <div style={{ fontSize: FS.bodySm, color: C.muted, lineHeight: 1.5 }}>{r.desc}</div>
-          </div>
-        </div>
-      ))}
-    </Card>
-  );
-}
-
-// ─── 5. Test & learning agenda ────────────────────────────────
-function TestAgenda({ items, testBudget, refreshWeek }: {
-  items: TestItem[]; testBudget?: string; refreshWeek?: number;
-}) {
-  return (
-    <Card>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 10 }}>
-        {items.map((t, i) => (
-          <div key={i} style={{ background: C.inset, borderRadius: 9, padding: "11px 13px" }}>
-            <div style={{ fontSize: FS.bodyXs, fontWeight: 500, color: C.p700, marginBottom: 5 }}>
-              {String(i + 1).padStart(2, "0")}
-            </div>
-            <div style={{ fontSize: FS.body, fontWeight: 500, color: C.ink, marginBottom: 6 }}>{t.title}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-              <span style={{ padding: "2px 8px", background: C.white, border: `0.5px solid ${C.border}`, borderRadius: 20, fontSize: FS.bodyXs, color: C.body }}>{t.option_a}</span>
-              <span style={{ fontSize: FS.bodyXs, color: C.muted }}>vs</span>
-              <span style={{ padding: "2px 8px", background: C.white, border: `0.5px solid ${C.border}`, borderRadius: 20, fontSize: FS.bodyXs, color: C.body }}>{t.option_b}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      {testBudget && (
-        <div style={{ paddingTop: 10, borderTop: `0.5px solid ${C.border}`, fontSize: FS.bodySm, color: C.muted, lineHeight: 1.6 }}>
-          Test budget: <span style={{ fontWeight: 500, color: C.ink }}>{testBudget}</span>
-          {refreshWeek && ` — results inform week ${refreshWeek} creative and targeting refresh across all active channels.`}
+    <div style={{ position: "relative" }}>
+      <svg ref={svgRef} width="100%" height="70" viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
+        {/* Area fill */}
+        <path d={`M${pts[0][0]},${H} ${pts.map(p => `L${p[0]},${p[1]}`).join(" ")} L${pts[pts.length - 1][0]},${H} Z`}
+          fill={`${C.p700}09`} />
+        {/* Line segments colored by phase */}
+        {pts.slice(0, -1).map((p, i) => {
+          const col = phaseColors[weeks[i].phase?.toLowerCase()] ?? C.p700;
+          return <line key={i} x1={p[0]} y1={p[1]} x2={pts[i + 1][0]} y2={pts[i + 1][1]} stroke={col} strokeWidth="2.5" strokeLinecap="round" />;
+        })}
+        {/* Dots */}
+        {pts.map((p, i) => {
+          const col = phaseColors[weeks[i].phase?.toLowerCase()] ?? C.p700;
+          return (
+            <circle key={i} cx={p[0]} cy={p[1]} r="5" fill={col} stroke={C.white} strokeWidth="2"
+              style={{ cursor: "pointer" }}
+              onMouseEnter={() => setTooltip({ text: `W${weeks[i].week} — ${weeks[i].phase} · ${fmtK(weeks[i].budget)} · ${weeks[i].focus}`, x: (p[0] / W) * 100, y: (p[1] / H) * 100 })}
+              onMouseLeave={() => setTooltip(null)} />
+          );
+        })}
+      </svg>
+      {tooltip && (
+        <div style={{ position: "absolute", left: `${tooltip.x}%`, top: `${tooltip.y}%`, transform: "translate(-50%,-120%)", background: C.p900, color: "#fff", fontSize: 9, padding: "5px 9px", borderRadius: 7, whiteSpace: "nowrap", pointerEvents: "none", zIndex: 10 }}>
+          {tooltip.text}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────
+// Budget bar
+function BudgetBar({ label, amount, pct, color, lightText = false }: { label: string; amount: string; pct: number; color: string; lightText?: boolean }) {
+  const [w, setW] = useState(0);
+  useEffect(() => { const t = setTimeout(() => setW(pct), 150); return () => clearTimeout(t); }, [pct]);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", borderBottom: `.5px solid ${C.border}` }}>
+      <div style={{ width: 120, fontSize: FS.bodySm, color: C.body, flexShrink: 0 }}>{label}</div>
+      <div style={{ flex: 1, height: 6, background: C.inset, borderRadius: 3, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${w}%`, background: color, borderRadius: 3, transition: "width 1s cubic-bezier(.4,0,.2,1)" }} />
+      </div>
+      <div style={{ fontSize: FS.bodySm, fontWeight: 700, color: C.ink, width: 50, textAlign: "right" }}>{amount}</div>
+      <div style={{ fontSize: FS.bodyXs, color: C.muted, width: 30, textAlign: "right" }}>{pct}%</div>
+    </div>
+  );
+}
+
 export function SecBudget({ d, raw }: { d: BudgetData; raw: string }) {
-  const optRules  = (d.optimisation_rules || []) as OptimisationRule[];
-  const testItems = (d.test_items         || []) as TestItem[];
+  const byFunnel = d.by_funnel || [];
+  const byChannel = d.by_channel || [];
+  const weeks = d.pacing?.weeks || [];
+  const phases = d.pacing?.phases || [];
+  const rationale = d.budget_rationale || [];
+  const optRules = (d.optimisation_rules || []) as OptimisationRule[];
+  const testItems = (d.test_items || []) as TestItem[];
 
   return (
     <div>
+      {/* KPI strip */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 10 }}>
+        {[
+          ["Total budget", fmtK(d.total_budget)],
+          ["Net media", fmtK(d.net_budget)],
+          ["Test budget", `${fmtK(d.test_budget?.amount ?? 0)} (${d.test_budget?.pct ?? 0}%)`],
+          ["Active channels", String((d.by_channel?.length ?? 0))],
+        ].map(([l, v], i) => (
+          <div key={l} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `2px solid ${C.p700}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
+            <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{l}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{v}</div>
+          </div>
+        ))}
+      </div>
 
-      {/* 1. Budget overview */}
-      <div style={{ marginBottom: 10 }}>
-        <SectionLabel>1 — Budget overview</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
-          <KpiCard label="Total budget"       value={fmtK(d.total_budget)} />
-          <KpiCard label="Net media budget"   value={fmtK(d.net_budget)} />
-          <KpiCard label="Test & optimisation" value={fmtK(d.test_budget?.amount)} sub={`${d.test_budget?.pct || 10}% of total`} />
-          <KpiCard label="Active channels"    value={d.by_channel?.length || "—"} />
+      {/* Treemap */}
+      {byChannel.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <SectionLabel>Budget allocatie — klik kanaal</SectionLabel>
+          <Treemap channels={byChannel} />
         </div>
-      </div>
-
-      {/* 2. Budget allocation — pair */}
-      <div style={{ marginBottom: 10 }}>
-        <BudgetAllocation d={d} />
-      </div>
-
-      {/* 3. Pacing strategy — full width */}
-      <PacingStrategy d={d} />
-
-      {/* 4 + 5 — pair */}
-      {(optRules.length > 0 || testItems.length > 0) && (
-        <Pair
-          left={<>{optRules.length > 0 && <><SectionLabel>4 — Optimisation logic</SectionLabel><OptimisationLogic rules={optRules} /></>}</>}
-          right={<>{testItems.length > 0 && <><SectionLabel>5 — Test & learning agenda</SectionLabel><TestAgenda items={testItems} testBudget={fmtK(d.test_budget?.amount)} refreshWeek={d.test_budget?.refresh_week} /></>}</>}
-        />
       )}
+
+      {/* By funnel + by channel bars */}
+      <Pair
+        left={<><SectionLabel>By funnel stage</SectionLabel>
+          <Card>{byFunnel.map((s, i) => (
+            <BudgetBar key={i} label={s.stage} amount={fmtK(s.budget)} pct={s.pct} color={PHASE_COLS[i % 4]} />
+          ))}</Card></>}
+        right={<><SectionLabel>By channel</SectionLabel>
+          <Card>{byChannel.slice(0, 5).map((c, i) => (
+            <BudgetBar key={i} label={c.channel} amount={fmtK(c.budget)} pct={c.pct} color={PHASE_COLS[i % 4]} />
+          ))}</Card></>}
+      />
+
+      {/* Wave pacing */}
+      {weeks.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <SectionLabel>Pacing wave — hover voor weekdetail</SectionLabel>
+          <Card>
+            <WavePacing weeks={weeks} />
+            <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
+              {[["#1A0050", "Burst"], [C.p700, "Peak"], [C.p600, "Always-on"]].map(([col, lbl]) => (
+                <div key={lbl} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: col }} />
+                  <span style={{ fontSize: FS.bodyXs, color: C.muted }}>{lbl}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Optimisation + Test */}
+      <Pair
+        left={<><SectionLabel>Optimisation rules</SectionLabel>
+          <Card style={{ padding: "0 14px" }}>
+            {optRules.map((r, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "10px 0", borderBottom: i < optRules.length - 1 ? `.5px solid ${C.border}` : "none" }}>
+                <div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{r.icon}</div>
+                <div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{r.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{r.desc}</div></div>
+              </div>
+            ))}
+          </Card></>}
+        right={<><SectionLabel>Test agenda</SectionLabel>
+          <Card>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+              {testItems.map((t, i) => (
+                <div key={i} style={{ background: C.inset, borderRadius: 8, padding: "9px 11px" }}>
+                  <div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 4 }}>A/B test</div>
+                  <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{t.title}</div>
+                  <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.option_a} vs {t.option_b}</div>
+                </div>
+              ))}
+            </div>
+          </Card></>}
+      />
 
       <FeedbackBar phase="budget" outputRaw={raw} />
     </div>

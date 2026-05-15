@@ -1,141 +1,171 @@
 "use client";
+import { useState } from "react";
 import { C, FS } from "@/lib/tokens";
-import { Card, KpiCard, FeedbackBar, Pair, SectionLabel } from "@/components/ui/primitives";
-import { fmtK, fmtN, fmtE, fmtP } from "@/lib/format";
+import { KpiCard, Card, CardLabel, FeedbackBar, Pair, SectionLabel } from "@/components/ui/primitives";
 import type { MediaplanData, MediaChannel, ExecutionInsight } from "@/lib/types";
 
-const PHASE_COLS: Record<string, string> = {
-  awareness:     C.p900,
-  consideration: C.p700,
-  conversion:    C.p600,
-  retention:     C.p300,
-};
 const FALLBACK_COLS = [C.p900, C.p700, C.p600, C.p300];
+function channelColor(i: number) { return FALLBACK_COLS[i % 4]; }
 
-function stageColor(stage: string, i: number): string {
-  const s = (stage || "").toLowerCase();
-  for (const [key, col] of Object.entries(PHASE_COLS)) {
-    if (s.includes(key)) return col;
-  }
-  return FALLBACK_COLS[i % 4];
-}
+function fmtM(n: number) { return n > 1000000 ? `${(n / 1000000).toFixed(1)}M` : n > 1000 ? `${(n / 1000).toFixed(0)}K` : String(n); }
+function fmtE(n: number) { return `€${n.toFixed(0)}`; }
+function fmtPct(n: number) { return `${(n * 100).toFixed(1)}%`; }
 
-// ─── Channel row ──────────────────────────────────────────────
-function ChannelRow({ ch, i }: { ch: MediaChannel; i: number }) {
-  const col     = stageColor(ch.funnel_stage, i);
-  const isLight = col === C.p300;
-  const meta    = [ch.funnel_stage, ch.platform, ch.buy_type].filter(Boolean).join(" · ");
+// Bubble chart: reach vs selectivity, size = budget
+function BubbleChart({ channels }: { channels: MediaChannel[] }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  // We simulate reach/selectivity from funnel_stage
+  const stageReach: Record<string, number> = { awareness: 88, consideration: 70, conversion: 52, retention: 45 };
+  const stageSelect: Record<string, number> = { awareness: 45, consideration: 65, conversion: 92, retention: 80 };
+  const maxBudget = Math.max(...channels.map(c => c.budget));
 
-  // Pick the right rate metric label — CPC for Search, CPM otherwise
-  const rateLabel = (ch.buy_type || "").toLowerCase().includes("cpc") || (ch.platform || "").toLowerCase().includes("search") ? "CPC" : "CPM";
-  const rateValue = rateLabel === "CPC" ? fmtE(ch.cpm) : fmtE(ch.cpm); // both stored as cpm field
+  if (typeof window !== "undefined" && !visible) setTimeout(() => setVisible(true), 100);
+
+  const W = 500, H = 160, padL = 44, padB = 30;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 130px", borderRadius: 9, overflow: "hidden", border: `0.5px solid ${col}28`, marginBottom: 6 }}>
-      {/* Left: name + meta + budget */}
-      <div style={{ background: col, padding: "12px 13px" }}>
-        <div style={{ fontSize: FS.body, fontWeight: 500, color: isLight ? C.p900 : "#fff", marginBottom: 2 }}>{ch.name}</div>
-        <div style={{ fontSize: FS.cardLabel, color: isLight ? "rgba(26,0,80,.5)" : "rgba(255,255,255,.5)", marginBottom: 7, lineHeight: 1.4 }}>{meta}</div>
-        <div style={{ display: "inline-block", padding: "3px 9px", background: isLight ? "rgba(26,0,80,.12)" : "rgba(255,255,255,.18)", borderRadius: 20, fontSize: FS.bodyXs, fontWeight: 500, color: isLight ? C.p900 : "#fff" }}>
-          {fmtK(ch.budget)}
-        </div>
+    <Card style={{ padding: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 8, color: C.muted, marginBottom: 4 }}>
+        <span>Breed ←</span><span>→ Selectief</span>
       </div>
-      {/* Middle: formats + targeting */}
-      <div style={{ background: C.white, padding: "12px 14px", borderLeft: `0.5px solid ${C.border}` }}>
-        <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: col, textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 6 }}>Formats & targeting</div>
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
-          {ch.formats?.map((f, j) => (
-            <span key={j} style={{ padding: "2px 7px", background: col + "18", color: col, borderRadius: 20, fontSize: FS.bodyXs, fontWeight: 500 }}>{f}</span>
-          ))}
-        </div>
-        <div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.4 }}>{ch.targeting}</div>
-      </div>
-      {/* Right: KPIs */}
-      <div style={{ background: C.inset, padding: "12px 13px", borderLeft: `0.5px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, alignContent: "start" }}>
-        {([
-          [rateLabel, rateValue],
-          ["CTR",     fmtP(ch.ctr)],
-          ["Conv.",   fmtN(ch.conversions)],
-          ["CPA",     fmtE(ch.cpa)],
-        ] as [string, string][]).map(([k, v]) => (
-          <div key={k}>
-            <div style={{ fontSize: FS.cardLabel, fontWeight: 600, color: C.muted, marginBottom: 2 }}>{k}</div>
-            <div style={{ fontSize: FS.body, fontWeight: 500, color: C.ink }}>{v}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+      <div style={{ position: "relative", height: H }}>
+        {/* Axes */}
+        <div style={{ position: "absolute", bottom: padB, left: padL, right: 10, height: 1, background: C.border }} />
+        <div style={{ position: "absolute", left: padL, top: 10, bottom: padB, width: 1, background: C.border }} />
+        <div style={{ position: "absolute", top: 10, left: 4, fontSize: 8, color: C.muted }}>Bereik ↑</div>
 
-// ─── 3. Key execution insights ────────────────────────────────
-function ExecutionInsights({ items }: { items: ExecutionInsight[] }) {
-  return (
-    <Card style={{ padding: "0 16px" }}>
-      {items.map((ins, i) => (
-        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 0", borderBottom: i < items.length - 1 ? `0.5px solid ${C.border}` : "none" }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
-            {ins.icon}
-          </div>
-          <div>
-            <div style={{ fontSize: FS.body, fontWeight: 500, color: C.ink, marginBottom: 2 }}>{ins.title}</div>
-            <div style={{ fontSize: FS.bodySm, color: C.muted, lineHeight: 1.5 }}>{ins.desc}</div>
-          </div>
-        </div>
-      ))}
+        {channels.map((ch, i) => {
+          const reach = stageReach[ch.funnel_stage?.toLowerCase() ?? "awareness"] ?? 70;
+          const select = stageSelect[ch.funnel_stage?.toLowerCase() ?? "awareness"] ?? 60;
+          const size = Math.max(28, Math.sqrt(ch.budget / maxBudget) * 56);
+          const col = channelColor(i);
+          const x = padL + (select / 100) * (W - padL - 20);
+          const y = padB + ((100 - reach) / 100) * (H - padB - 20) + 10;
+          const isHov = hovered === ch.name;
+
+          return (
+            <div key={i}
+              onMouseEnter={() => setHovered(ch.name)}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                position: "absolute", left: x, top: y,
+                width: size, height: size, borderRadius: "50%",
+                background: col, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                transform: `translate(-50%,-50%) scale(${visible ? 1 : 0})`,
+                transition: `transform .5s cubic-bezier(.34,1.3,.64,1) ${i * .1}s`,
+                cursor: "pointer", zIndex: isHov ? 10 : 1,
+                boxShadow: isHov ? `0 0 0 5px ${col}30` : "none",
+              }}>
+              {size > 36 && <span style={{ fontSize: size > 44 ? 9 : 7, fontWeight: 700, color: "#fff", textAlign: "center", lineHeight: 1.2 }}>{ch.name.split(" ")[0]}</span>}
+              {isHov && (
+                <div style={{ position: "absolute", bottom: "110%", left: "50%", transform: "translateX(-50%)", background: C.p900, color: "#fff", fontSize: 9, padding: "4px 8px", borderRadius: 6, whiteSpace: "nowrap" }}>
+                  {ch.name} · {fmtE(ch.budget)} · CPA {fmtE(ch.cpa)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 8, color: C.muted }}>Grootte = budget · Positie = reach vs selectiviteit</span>
+      </div>
     </Card>
   );
 }
 
-// ─── 4. Optimisation approach ─────────────────────────────────
-function OptimisationApproach({ notes }: { notes: string[] }) {
-  return (
-    <Card>
-      {notes.map((n, i) => (
-        <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: i < notes.length - 1 ? 8 : 0 }}>
-          <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 6, flexShrink: 0 }} />
-          <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{n}</div>
-        </div>
-      ))}
-    </Card>
-  );
-}
-
-// ─── Main ─────────────────────────────────────────────────────
 export function SecMediaplan({ d, raw }: { d: MediaplanData; raw: string }) {
-  const channels = d.channels || [];
-  const totals   = d.totals   || { budget: 0, impressions: 0, clicks: 0, conversions: 0 };
+  const channels = (d.channels || []) as MediaChannel[];
   const insights = (d.execution_insights || []) as ExecutionInsight[];
-  const optNotes = (d.optimisation_notes || []) as string[];
+  const notes = (d.optimisation_notes || []) as string[];
+  const t = d.totals;
+  const [filter, setFilter] = useState<string>("all");
+  const stages = ["all", ...Array.from(new Set(channels.map(c => c.funnel_stage)))];
+  const filtered = filter === "all" ? channels : channels.filter(c => c.funnel_stage === filter);
 
   return (
     <div>
-
-      {/* 1. Media overview */}
-      <div style={{ marginBottom: 10 }}>
-        <SectionLabel>1 — Media overview</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8 }}>
-          <KpiCard label="Total budget"  value={fmtK(totals.budget)} />
-          <KpiCard label="Impressions"   value={fmtN(totals.impressions)} />
-          <KpiCard label="Clicks"        value={fmtN(totals.clicks)} />
-          <KpiCard label="Conversions"   value={fmtN(totals.conversions)} />
-          <KpiCard label="Blended CPA"   value={totals.blended_cpa ? fmtE(totals.blended_cpa) : totals.conversions > 0 ? fmtE(totals.budget / totals.conversions) : "—"} />
-        </div>
+      {/* KPI strip */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 8, marginBottom: 10 }}>
+        {[
+          ["Budget", t?.budget ? `€${(t.budget / 1000000).toFixed(1)}M` : "—"],
+          ["Impressions", t?.impressions ? `${(t.impressions / 1000000).toFixed(1)}M` : "—"],
+          ["Clicks", t?.clicks ? fmtM(t.clicks) : "—"],
+          ["Conversions", t?.conversions ? fmtM(t.conversions) : "—"],
+          ["Blended CPA", t?.blended_cpa ? fmtE(t.blended_cpa) : "—"],
+        ].map(([l, v], i) => (
+          <div key={l as string} style={{ background: C.white, borderRadius: 11, boxShadow: C.shadowSm, padding: "12px 14px", borderTop: `2px solid ${C.p700}`, animation: `slideInUp .4s ease ${i * .07}s both` }}>
+            <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{l as string}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{v as string}</div>
+          </div>
+        ))}
       </div>
 
-      {/* 2. Channel plan */}
-      {channels.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <SectionLabel>2 — Channel plan</SectionLabel>
-          {channels.map((ch, i) => <ChannelRow key={i} ch={ch} i={i} />)}
-        </div>
-      )}
+      {/* Bubble chart */}
+      <div style={{ marginBottom: 10 }}>
+        <SectionLabel>Media mix — bereik vs selectiviteit</SectionLabel>
+        <BubbleChart channels={channels} />
+      </div>
 
-      {/* 3 + 4 — pair */}
-      {(insights.length > 0 || optNotes.length > 0) && (
+      {/* Filter */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+        {stages.map(s => (
+          <button key={s} onClick={() => setFilter(s)} style={{ padding: "4px 12px", borderRadius: 20, border: `.5px solid ${filter === s ? C.p700 : C.border}`, background: filter === s ? C.p100 : C.white, color: filter === s ? C.p700 : C.muted, fontSize: FS.bodyXs, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}>
+            {s === "all" ? "Alle kanalen" : s}
+          </button>
+        ))}
+      </div>
+
+      {/* Channel rows */}
+      <div style={{ marginBottom: 10 }}>
+        {filtered.map((ch, i) => (
+          <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr 110px", borderRadius: 10, overflow: "hidden", border: `.5px solid rgba(0,0,0,.06)`, marginBottom: 6, animation: `slideInUp .35s ease ${i * .07}s both` }}>
+            {/* Left — colored */}
+            <div style={{ background: channelColor(i), padding: "12px 13px" }}>
+              <div style={{ fontSize: FS.body, fontWeight: 700, color: "#fff", marginBottom: 3 }}>{ch.name}</div>
+              <div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.5)", marginBottom: 7 }}>{ch.funnel_stage}</div>
+              <div style={{ display: "inline-block", padding: "2px 8px", background: "rgba(255,255,255,.18)", borderRadius: 20, fontSize: FS.bodyXs, color: "#fff" }}>€{(ch.budget / 1000).toFixed(0)}K</div>
+            </div>
+            {/* Mid — formats */}
+            <div style={{ padding: "12px 13px", background: C.white, borderLeft: `.5px solid ${C.border}` }}>
+              <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: channelColor(i), textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 4 }}>Formats & targeting</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 5 }}>
+                {ch.formats?.slice(0, 3).map((f, j) => (
+                  <span key={j} style={{ padding: "2px 7px", background: `${channelColor(i)}15`, color: channelColor(i), borderRadius: 20, fontSize: FS.bodyXs }}>{f}</span>
+                ))}
+              </div>
+              <div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{ch.targeting}</div>
+            </div>
+            {/* Right — KPIs */}
+            <div style={{ background: C.inset, padding: "12px 13px", borderLeft: `.5px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, alignContent: "start" }}>
+              {[["CPM", `€${ch.cpm?.toFixed(2)}`], ["CTR", fmtPct(ch.ctr)], ["Conv.", fmtM(ch.conversions)], ["CPA", fmtE(ch.cpa)]].map(([k, v]) => (
+                <div key={k as string}><div style={{ fontSize: 8, fontWeight: 700, color: C.muted, marginBottom: 2 }}>{k as string}</div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink }}>{v as string}</div></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Insights + Notes */}
+      {(insights.length > 0 || notes.length > 0) && (
         <Pair
-          left={<>{insights.length > 0  && <><SectionLabel>3 — Key execution insights</SectionLabel><ExecutionInsights items={insights} /></>}</>}
-          right={<>{optNotes.length > 0 && <><SectionLabel>4 — Optimisation approach</SectionLabel><OptimisationApproach notes={optNotes} /></>}</>}
+          left={<><SectionLabel>Key insights</SectionLabel>
+            <Card style={{ padding: "0 14px" }}>
+              {insights.map((ins, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, padding: "10px 0", borderBottom: i < insights.length - 1 ? `.5px solid ${C.border}` : "none" }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: C.p100, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{ins.icon}</div>
+                  <div><div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{ins.title}</div><div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{ins.desc}</div></div>
+                </div>
+              ))}
+            </Card></>}
+          right={<><SectionLabel>Optimisation approach</SectionLabel>
+            <Card>{notes.map((n, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, marginBottom: 7 }}>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.p700, marginTop: 6, flexShrink: 0 }} />
+                <div style={{ fontSize: FS.bodySm, color: C.muted, lineHeight: 1.55 }}>{n}</div>
+              </div>
+            ))}</Card></>}
         />
       )}
 

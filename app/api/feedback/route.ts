@@ -39,26 +39,3 @@ export async function POST(req: Request) {
   return new Response("OK", { status: 200 });
 }
 
-// Temporary GET handler for Gemini diagnostics
-export async function GET() {
-  const key   = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
-  if (!key) return Response.json({ error: "GEMINI_API_KEY not set" });
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-    {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ contents: [{ parts: [{ text: "Say hello" }] }] }),
-    }
-  );
-  const data = await res.json();
-  return Response.json({
-    model,
-    key_prefix: key.slice(0, 8) + "...",
-    http_status: res.status,
-    ok: res.ok,
-    response: data,
-  });
-}
