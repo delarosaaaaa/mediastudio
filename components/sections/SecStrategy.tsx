@@ -1,248 +1,446 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { C, FS } from "@/lib/tokens";
-import { Card, CardLabel, FeedbackBar, Pair, SectionLabel } from "@/components/ui/primitives";
-import type { StrategyData, FunnelStage, Channel, ChannelOverlap } from "@/lib/types";
+import { FeedbackBar } from "@/components/ui/primitives";
+import type {
+  StrategyData, FunnelStage, Channel, ChannelOverlap,
+  MessagingPillar, AudiencePriority, RetargetingRule, SuccessMetric,
+} from "@/lib/types";
 
-const PHASE_COLS = [C.p900, C.p700, C.p600, C.p300];
-const PHASE_KEYS = ["awareness", "consideration", "conversion", "retention"] as const;
+// ─── Design tokens ────────────────────────────────────────────
+const COLS = [C.p900, C.p700, C.p600, C.p300];
 
-// Animated funnel
-function AnimatedFunnel({ stages }: { stages: FunnelStage[] }) {
-  const [animated, setAnimated] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setAnimated(true), 200); return () => clearTimeout(t); }, []);
-  const [hovered, setHovered] = useState<number | null>(null);
-  const cols = PHASE_COLS;
-  const maxPct = stages.reduce((a, s) => Math.max(a, s.budget_pct ?? 25), 0);
-
+// ─── Shared flip card wrapper ─────────────────────────────────
+function FlipCard({
+  height = 220,
+  face,
+  back,
+  delay = 0,
+}: {
+  height?: number;
+  face: ReactNode;
+  back: ReactNode;
+  delay?: number;
+}) {
+  const [flipped, setFlipped] = useState(false);
   return (
-    <Card style={{ padding: 0, overflow: "hidden" }}>
-      {stages.map((s, i) => {
-        const col = cols[i % 4];
-        const pct = s.budget_pct ?? (100 - i * 20);
-        const lightBg = i === stages.length - 1 && pct < 20;
-        const tc = lightBg ? C.p900 : "#fff";
-        const tc2 = lightBg ? `${C.p900}80` : "rgba(255,255,255,.6)";
-        return (
-          <div key={i}>
-            <div
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-              style={{ background: col, padding: "13px 15px", cursor: "pointer", transform: hovered === i ? "translateX(5px)" : "none", transition: "transform .2s" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: FS.body, fontWeight: 700, color: tc }}>{s.name}</span>
-                <span style={{ fontSize: FS.bodyXs, color: tc2 }}>{s.budget_pct ? `${s.budget_pct}%` : ""} · {s.channels?.slice(0, 2).join(", ")}</span>
-              </div>
-              <div style={{ height: 3, background: lightBg ? "rgba(26,0,80,.12)" : "rgba(255,255,255,.18)", borderRadius: 2, marginTop: 8, overflow: "hidden" }}>
-                <div style={{ height: "100%", borderRadius: 2, background: lightBg ? "rgba(26,0,80,.3)" : "rgba(255,255,255,.45)", width: animated ? `${(pct / maxPct) * 100}%` : "0%", transition: `width 1.1s cubic-bezier(.4,0,.2,1) ${i * .12}s` }} />
-              </div>
-            </div>
-            {i < stages.length - 1 && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "3px 0", background: C.white, fontSize: FS.bodyXs }}>
-                <span style={{ color: C.p300 }}>↓</span>
-                <span style={{ color: C.p700, fontWeight: 500 }}>{s.conversion_rate ?? ""}</span>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </Card>
-  );
-}
-
-// Channel network graph (SVG)
-function ChannelNetwork({ channels, overlaps }: { channels: Channel[]; overlaps: ChannelOverlap[] }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 300); return () => clearTimeout(t); }, []);
-
-  const n = Math.min(channels.length, 5);
-  const cx = 220, cy = 90, r = 65;
-  const positions = channels.slice(0, n).map((_, i) => {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-    return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
-  });
-  const nodeR = 26;
-  const stageCols: Record<string, string> = { awareness: C.p900, consideration: C.p700, conversion: C.p600, retention: C.p300 };
-
-  return (
-    <Card style={{ padding: 10 }}>
-      <svg width="100%" height="180" viewBox="0 0 440 180">
-        {/* connections */}
-        {overlaps.slice(0, 6).map((ov, i) => {
-          const aIdx = channels.findIndex(c => c.name === ov.channels?.[0]);
-          const bIdx = channels.findIndex(c => c.name === ov.channels?.[1]);
-          if (aIdx < 0 || bIdx < 0 || aIdx >= n || bIdx >= n) return null;
-          const a = positions[aIdx], b = positions[bIdx];
-          const thick = Math.max(1.5, (ov.overlap_pct ?? 50) / 100 * 8);
-          const isHov = ov.channels?.includes(hovered ?? "") ?? false;
-          return (
-            <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke={isHov ? C.p700 : C.border}
-              strokeWidth={isHov ? thick + 3 : thick}
-              strokeLinecap="round"
-              style={{ transition: "stroke .2s, stroke-width .2s" }}
-            />
-          );
-        })}
-        {/* nodes */}
-        {channels.slice(0, n).map((ch, i) => {
-          const pos = positions[i];
-          const col = stageCols[ch.role?.toLowerCase()?.split(" ")[0] ?? ""] ?? C.p600;
-          const isHov = hovered === ch.name;
-          return (
-            <g key={i} style={{ cursor: "pointer" }}
-              onMouseEnter={() => setHovered(ch.name)}
-              onMouseLeave={() => setHovered(null)}>
-              <circle cx={pos.x} cy={pos.y} r={isHov ? nodeR + 3 : nodeR}
-                fill={col} style={{ transform: `scale(${visible ? 1 : 0})`, transformOrigin: `${pos.x}px ${pos.y}px`, transition: `transform .45s cubic-bezier(.34,1.56,.64,1) ${i * .1}s, r .2s` }} />
-              <text x={pos.x} y={pos.y - 4} textAnchor="middle" fontSize={8} fontWeight="700" fill="rgba(255,255,255,.9)" fontFamily="sans-serif">{ch.name.split(" ")[0]}</text>
-              <text x={pos.x} y={pos.y + 7} textAnchor="middle" fontSize={7} fill="rgba(255,255,255,.55)" fontFamily="sans-serif">{ch.role ?? ""}</text>
-            </g>
-          );
-        })}
-      </svg>
-      {hovered && (
-        <div style={{ padding: "7px 10px", background: C.inset, borderRadius: 8, fontSize: FS.bodyXs, color: C.body }}>
-          {overlaps.find(o => o.channels?.includes(hovered ?? ""))?.insight ?? hovered}
+    <div
+      onClick={() => setFlipped(f => !f)}
+      style={{ perspective: 900, height, cursor: "pointer", animation: `slideInUp .4s ease ${delay}s both` }}
+    >
+      <div style={{
+        position: "relative", width: "100%", height: "100%",
+        transition: "transform .52s cubic-bezier(.4,0,.2,1)",
+        transformStyle: "preserve-3d",
+        transform: flipped ? "rotateY(180deg)" : "none",
+      }}>
+        {/* Face */}
+        <div style={{
+          position: "absolute", inset: 0, backfaceVisibility: "hidden",
+          background: C.white, borderRadius: 14, border: `.5px solid ${C.border}`,
+          padding: 18, display: "flex", flexDirection: "column",
+          transition: "box-shadow .2s, transform .2s",
+          boxShadow: "none",
+        }}
+          onMouseEnter={e => {
+            if (!flipped) {
+              (e.currentTarget as HTMLDivElement).style.boxShadow = "0 10px 28px rgba(91,33,182,.11)";
+              (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
+            }
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+            (e.currentTarget as HTMLDivElement).style.transform = "none";
+          }}
+        >
+          {face}
+          {/* Flip indicator */}
+          <div style={{
+            position: "absolute", bottom: 14, right: 14,
+            width: 22, height: 22, borderRadius: 7,
+            background: C.p100, display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: 11, color: C.p700,
+            transition: "background .2s",
+          }}>⟳</div>
         </div>
-      )}
-    </Card>
-  );
-}
-
-// Venn 2x2 grid
-function VennGrid({ overlaps }: { overlaps: ChannelOverlap[] }) {
-  const phases = ["Awareness", "Consideration", "Conversion", "Retention"];
-  const phaseCols = PHASE_COLS;
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
-      {phases.map((phase, i) => {
-        const rel = overlaps.slice(i, i + 1)[0];
-        const pct = rel?.overlap_pct ?? (40 + i * 15);
-        return (
-          <div key={i} style={{ background: C.inset, borderRadius: 10, padding: "10px 12px" }}>
-            <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: phaseCols[i], textTransform: "uppercase" as const, letterSpacing: ".06em", marginBottom: 6 }}>{phase}</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 5 }}>
-              <svg width="50" height="36" viewBox="0 0 50 36">
-                <circle cx="16" cy="18" r="14" fill={phaseCols[i]} opacity=".75" />
-                <circle cx="30" cy="12" r="11" fill={phaseCols[i]} opacity=".55" />
-                <text x="23" y="19" fontSize="8" fontWeight="700" fill="white" textAnchor="middle" fontFamily="sans-serif">{pct}%</text>
-              </svg>
-              <div style={{ fontSize: 16, fontWeight: 800, color: phaseCols[i] }}>{pct}%<span style={{ fontSize: 9, fontWeight: 400, color: C.muted }}> overlap</span></div>
-            </div>
-            <div style={{ fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.45 }}>{rel?.insight ?? "Channel synergy actief"}</div>
-          </div>
-        );
-      })}
+        {/* Back */}
+        <div style={{
+          position: "absolute", inset: 0, backfaceVisibility: "hidden",
+          background: C.p900, borderRadius: 14, border: `.5px solid ${C.p700}`,
+          padding: 16, display: "flex", flexDirection: "column",
+          transform: "rotateY(180deg)",
+        }}>
+          {back}
+          <div
+            onClick={e => { e.stopPropagation(); setFlipped(false); }}
+            style={{ marginTop: "auto", paddingTop: 8, borderTop: ".5px solid rgba(255,255,255,.1)", fontSize: 10, color: "rgba(255,255,255,.35)", textAlign: "center", cursor: "pointer" }}
+          >↩ Terug</div>
+        </div>
+      </div>
     </div>
   );
 }
 
-export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
+// Back content helper
+function BackBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ padding: "8px 10px", background: "rgba(255,255,255,.06)", borderRadius: 8, border: ".5px solid rgba(255,255,255,.1)", marginBottom: 6 }}>
+      <div style={{ fontSize: 9, color: "rgba(255,255,255,.4)", marginBottom: 3, textTransform: "uppercase" as const, letterSpacing: ".07em" }}>{label}</div>
+      <div style={{ fontSize: 11, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{value}</div>
+    </div>
+  );
+}
+
+// Face hero number
+function FaceHero({ label, hero, title, sub }: { label: string; hero: string; title: string; sub: string }) {
+  return (
+    <>
+      <div style={{ fontSize: 9, fontWeight: 700, color: C.p400, textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 34, fontWeight: 500, color: C.ink, letterSpacing: "-1.5px", lineHeight: 1, marginBottom: 6 }}>{hero}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 5, lineHeight: 1.35 }}>{title}</div>
+      <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.6, flex: 1 }}>{sub}</div>
+    </>
+  );
+}
+
+// ─── SUB-TAB: Funnel ──────────────────────────────────────────
+function TabFunnel({ d }: { d: StrategyData }) {
   const stages = (d.stages || []) as FunnelStage[];
-  const channels = (d.channels || []) as Channel[];
-  const channelOverlap = (d.channel_overlap || []) as ChannelOverlap[];
-  const budgetStages = (d.budget_stages || []) as import("@/lib/types").BudgetStage[];
-  const messagingPillars = (d.messaging_pillars || []) as import("@/lib/types").MessagingPillar[];
-  const audiencePriority = (d.audience_priority || []) as import("@/lib/types").AudiencePriority[];
-  const retargetingRules = (d.retargeting_rules || []) as import("@/lib/types").RetargetingRule[];
-  const successMetrics = (d.success_metrics || []) as import("@/lib/types").SuccessMetric[];
-  const channelRoles = (d.channel_roles || []) as import("@/lib/types").ChannelRole[];
+  const [hintDone, setHintDone] = useState(false);
+
+  const funnelCards = [
+    {
+      label: "Awareness",
+      hero: `${stages[0]?.budget_pct ?? 40}%`,
+      title: stages[0]?.name ?? "Brand building",
+      sub: stages[0] ? `${stages[0].channels?.slice(0, 2).join(" · ")} · ${stages[0].kpi}` : "YouTube + Meta + Spotify",
+      back: [
+        ["Budget", `${stages[0]?.budget_pct ?? 40}% van netto mediabudget`],
+        ["Kanalen", stages[0]?.channels?.join(" · ") ?? "YouTube · Meta · Spotify"],
+        ["KPI", stages[0]?.kpi ?? "Impressions + aided awareness"],
+        ["Boodschap", stages[0]?.message_type ?? "Trust-first storytelling"],
+      ],
+    },
+    {
+      label: "Consideration",
+      hero: `${stages[1]?.budget_pct ?? 30}%`,
+      title: stages[1]?.name ?? "Retargeting & vergelijking",
+      sub: stages[1] ? `${stages[1].channels?.slice(0, 2).join(" · ")} · ${stages[1].kpi}` : "Search + Meta Carousel",
+      back: [
+        ["Budget", `${stages[1]?.budget_pct ?? 30}% van netto mediabudget`],
+        ["Kanalen", stages[1]?.channels?.join(" · ") ?? "Google Search · Meta Carousel"],
+        ["KPI", stages[1]?.kpi ?? "Website visits · savings calc completions"],
+        ["Conversieratio", stages[1]?.conversion_rate ?? "4.2% doorklik vanuit awareness"],
+      ],
+    },
+    {
+      label: "Conversion",
+      hero: `${stages[2]?.budget_pct ?? 22}%`,
+      title: stages[2]?.name ?? "Search vangt switching intent",
+      sub: stages[2] ? `${stages[2].channels?.slice(0, 2).join(" · ")} · ${stages[2].kpi}` : "Search · Retargeting",
+      back: [
+        ["Budget", `${stages[2]?.budget_pct ?? 22}% van netto mediabudget`],
+        ["Kanalen", stages[2]?.channels?.join(" · ") ?? "Google Search · Meta retargeting"],
+        ["KPI", stages[2]?.kpi ?? "New accounts · CPA ≤ €45"],
+        ["Synergie", stages[2]?.conversion_rate ?? "2.3× hogere CTR na YouTube exposure"],
+      ],
+    },
+    {
+      label: "Retention",
+      hero: `${stages[3]?.budget_pct ?? 8}%`,
+      title: stages[3]?.name ?? "Push, email + referral",
+      sub: stages[3] ? `${stages[3].channels?.slice(0, 2).join(" · ")} · ${stages[3].kpi}` : "Push · Email · Referral",
+      back: [
+        ["Budget", `${stages[3]?.budget_pct ?? 8}% van netto mediabudget`],
+        ["Kanalen", stages[3]?.channels?.join(" · ") ?? "Push · Email · Meta retargeting"],
+        ["KPI", stages[3]?.kpi ?? "30-day retention · activatiegraad"],
+        ["Referral live", stages[3]?.conversion_rate ?? "Week 6 · €20 CPA organisch"],
+      ],
+    },
+  ];
 
   return (
     <div>
-      {/* Strategic idea hero */}
+      {/* Strategic idea — hero flip */}
       {d.strategic_idea && (
-        <div style={{ background: C.p900, borderRadius: 14, padding: "18px 22px", marginBottom: 10, animation: "slideInUp .35s ease" }}>
-          <div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: "rgba(255,255,255,.35)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>Strategisch idee</div>
-          <div style={{ fontSize: FS.bodyLg, fontWeight: 700, color: "#fff", lineHeight: 1.65, maxWidth: 640 }}>{d.strategic_idea}</div>
+        <div style={{ perspective: 900, height: 82, marginBottom: 12, cursor: "pointer" }} onClick={() => {}}>
+          <HeroFlip idea={d.strategic_idea} />
         </div>
       )}
 
-      <Pair
-        left={<><SectionLabel>Audience priority</SectionLabel>
-          <Card>
-            {audiencePriority.map((ap, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 0", borderBottom: `.5px solid ${C.border}` }}>
-                <div style={{ padding: "2px 9px", background: PHASE_COLS[i % 4] + "22", color: PHASE_COLS[i % 4], borderRadius: 20, fontSize: FS.bodyXs, fontWeight: 700, minWidth: 110, textAlign: "center" }}>{ap.segment}</div>
-                <div style={{ flex: 1, fontSize: FS.bodyXs, color: C.muted, lineHeight: 1.4 }}>{ap.why}</div>
-                <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: PHASE_COLS[i % 4] }}>{ap.priority}</div>
-              </div>
-            ))}
-          </Card></>}
-        right={<><SectionLabel>Messaging pillars</SectionLabel>
-          <Card>
-            {messagingPillars.map((p, i) => (
-              <div key={i} style={{ background: [C.p100, C.inset, C.inset][i] ?? C.inset, borderRadius: 9, padding: "10px 12px", marginBottom: i < messagingPillars.length - 1 ? 7 : 0 }}>
-                <div style={{ fontSize: FS.bodyXs, color: C.p700, marginBottom: 3 }}>0{i + 1}</div>
-                <div style={{ fontSize: FS.body, fontWeight: 700, color: C.p900, marginBottom: 2 }}>{p.title}</div>
-                <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{p.description}</div>
-              </div>
-            ))}
-          </Card></>}
-      />
+      {/* Hint */}
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, color: C.muted, marginBottom: 14, opacity: hintDone ? 0 : 1, transition: "opacity .4s", pointerEvents: "none" }}>
+        <HintDot />
+        Klik een kaart om te draaien voor detail
+      </div>
 
-      {/* Funnel */}
-      {stages.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <SectionLabel>Funnel strategy</SectionLabel>
-          <AnimatedFunnel stages={stages} />
+      {/* 4 flip cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {funnelCards.map((fc, i) => (
+          <FlipCard
+            key={i}
+            delay={i * 0.06}
+            face={<FaceHero label={fc.label} hero={fc.hero} title={fc.title} sub={fc.sub} />}
+            back={<><div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>{fc.label} — detail</div>{fc.back.map(([l, v]) => <BackBlock key={l} label={l} value={v} />)}</>}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Hero flip (strategic idea)
+function HeroFlip({ idea }: { idea: string }) {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%", transition: "transform .52s cubic-bezier(.4,0,.2,1)", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "none" }}
+      onClick={() => setFlipped(f => !f)}>
+      <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.p900, borderRadius: 14, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".1em", marginBottom: 5 }}>Strategisch idee — klik voor toelichting</div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "#fff", lineHeight: 1.5, maxWidth: 600 }}>{idea}</div>
+      </div>
+      <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.p700, borderRadius: 14, padding: "16px 20px", display: "flex", alignItems: "center", transform: "rotateY(180deg)" }}>
+        <div style={{ fontSize: 12, color: "#fff", lineHeight: 1.7 }}>Trust-first omdat 62% van NL switchers vertrouwen als primaire barrière noemt. Vault combineert als enige: Dutch-first communicatie, DNB-licentie, zero-fee én moderne UX. Geen concurrent ownt dit.</div>
+      </div>
+    </div>
+  );
+}
+
+// Hint dot — one subtle pulse, no repeat
+function HintDot() {
+  return (
+    <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.p700, position: "relative", flexShrink: 0 }}>
+      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: C.p700, animation: "pulseRing 2s ease 0.5s 3" }} />
+    </div>
+  );
+}
+
+// ─── SUB-TAB: Channels ────────────────────────────────────────
+function TabChannels({ d }: { d: StrategyData }) {
+  const channels = (d.channels || []) as Channel[];
+  const overlaps = (d.channel_overlap || []) as ChannelOverlap[];
+  const pillars = (d.messaging_pillars || []) as MessagingPillar[];
+  const priority = (d.audience_priority || []) as AudiencePriority[];
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, color: C.muted, marginBottom: 14, pointerEvents: "none" }}>
+        <HintDot />
+        Klik een kaart voor targeting, rol en synergie
+      </div>
+
+      {/* Channel flip cards */}
+      {channels.length > 0 ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10, marginBottom: 12 }}>
+          {channels.map((ch, i) => (
+            <FlipCard key={i} height={200} delay={i * 0.05}
+              face={
+                <>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, background: COLS[i % 4], marginBottom: 10 }} />
+                  <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 3 }}>{ch.name}</div>
+                  <div style={{ fontSize: 10, color: C.muted, marginBottom: 7 }}>{ch.role}</div>
+                  <div style={{ fontSize: 11, color: C.body, lineHeight: 1.5, flex: 1 }}>{ch.motivation}</div>
+                </>
+              }
+              back={
+                <>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>{ch.name}</div>
+                  <BackBlock label="Targeting" value={ch.targeting} />
+                  <BackBlock label="Formats" value={ch.formats?.join(" · ") ?? "—"} />
+                  <BackBlock label="Always-on" value={ch.always_on ? "Ja — loopt heel de campagne" : "Nee — burst/peak alleen"} />
+                  {overlaps.find(o => o.channels?.includes(ch.name)) && (
+                    <BackBlock label="Synergie" value={overlaps.find(o => o.channels?.includes(ch.name))?.insight ?? ""} />
+                  )}
+                </>
+              }
+            />
+          ))}
         </div>
+      ) : (
+        <div style={{ color: C.muted, fontSize: FS.bodySm, marginBottom: 12 }}>Geen kanaaldata beschikbaar.</div>
       )}
 
-      {/* Network + Venn */}
-      <Pair
-        left={<><SectionLabel>Channel synergy network</SectionLabel>
-          {channels.length > 0
-            ? <ChannelNetwork channels={channels} overlaps={channelOverlap} />
-            : <Card><div style={{ fontSize: FS.bodySm, color: C.muted }}>No channel data</div></Card>
-          }</>}
-        right={<><SectionLabel>Funnel overlap</SectionLabel>
-          <Card><VennGrid overlaps={channelOverlap} /></Card></>}
-      />
-
-      {/* Retargeting */}
-      {retargetingRules.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <SectionLabel>Retargeting rules</SectionLabel>
-          <Card>
-            {retargetingRules.map((r, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 20px 1fr", gap: 8, alignItems: "center", marginBottom: 7, animation: `slideInUp .3s ease ${i * .07}s both` }}>
-                <div style={{ background: C.inset, borderRadius: 8, padding: "7px 10px", fontSize: FS.bodyXs, color: C.body, lineHeight: 1.5 }}>{r.trigger}</div>
-                <div style={{ textAlign: "center", color: C.faint }}>→</div>
-                <div style={{ background: C.p100, borderLeft: `2px solid ${C.p700}`, borderRadius: "0 8px 8px 0", padding: "7px 10px", fontSize: FS.bodyXs, color: C.p700, lineHeight: 1.5 }}>{r.action}</div>
-              </div>
-            ))}
-          </Card>
-        </div>
-      )}
-
-      {/* Success metrics */}
-      {(d.north_star_kpi || successMetrics.length > 0) && (
+      {/* Messaging pillars */}
+      {pillars.length > 0 && (
         <div>
-          <SectionLabel>Success metrics</SectionLabel>
-          {d.north_star_kpi && (
-            <div style={{ background: C.p900, borderRadius: 12, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.35)", marginBottom: 3 }}>North-star KPI</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{d.north_star_kpi}</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 8 }}>Messaging pillars</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+            {pillars.map((p, i) => (
+              <div key={i} style={{ background: [C.p100, C.inset, C.inset][i % 3], borderRadius: 10, padding: "11px 13px", animation: `slideInUp .35s ease ${i * .07}s both` }}>
+                <div style={{ fontSize: 9, color: C.p700, marginBottom: 4 }}>0{i + 1}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.p900, marginBottom: 3 }}>{p.title}</div>
+                <div style={{ fontSize: 10, color: C.muted, lineHeight: 1.5 }}>{p.description}</div>
               </div>
-              <div style={{ fontSize: 28, color: "rgba(255,255,255,.08)" }}>★</div>
-            </div>
-          )}
-          {successMetrics.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(100px,1fr))", gap: 7 }}>
-              {successMetrics.map((m, i) => (
-                <div key={i} style={{ background: C.white, border: `.5px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", animation: `slideInUp .3s ease ${i * .07}s both` }}>
-                  <div style={{ fontSize: FS.bodyXs, color: C.muted, marginBottom: 3 }}>{m.label}</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: C.p700 }}>{m.value}</div>
-                </div>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── SUB-TAB: Retargeting ─────────────────────────────────────
+function TabRetargeting({ d }: { d: StrategyData }) {
+  const rules = (d.retargeting_rules || []) as RetargetingRule[];
+  const generic = d.retargeting || [];
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, color: C.muted, marginBottom: 14, pointerEvents: "none" }}>
+        <HintDot />
+        Klik een regel voor timing en budgetdetail
+      </div>
+      {rules.length > 0 ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {rules.map((r, i) => (
+            <FlipCard key={i} height={180} delay={i * 0.06}
+              face={
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 18px 1fr", gap: 8, alignItems: "center", height: "100%", paddingBottom: 20 }}>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 5 }}>Trigger</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: C.ink, lineHeight: 1.4 }}>{r.trigger}</div>
+                  </div>
+                  <div style={{ textAlign: "center", color: C.p700, fontSize: 16 }}>›</div>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: C.p700, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 5 }}>Actie</div>
+                    <div style={{ fontSize: 11, color: C.ink, lineHeight: 1.4 }}>{r.action}</div>
+                  </div>
+                </div>
+              }
+              back={
+                <>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>Uitvoering</div>
+                  <BackBlock label="Trigger" value={r.trigger} />
+                  <BackBlock label="Actie" value={r.action} />
+                </>
+              }
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {generic.slice(0, 6).map((item, i) => (
+            <div key={i} style={{ display: "flex", gap: 9, alignItems: "center", padding: "10px 14px", background: C.white, borderRadius: 10, border: `.5px solid ${C.border}`, animation: `slideInUp .3s ease ${i * .06}s both` }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.p700, flexShrink: 0 }} />
+              <div style={{ fontSize: FS.bodySm, color: C.body, lineHeight: 1.55 }}>{item}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SUB-TAB: Metrics ─────────────────────────────────────────
+function TabMetrics({ d }: { d: StrategyData }) {
+  const metrics = (d.success_metrics || []) as SuccessMetric[];
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setAnimated(true), 200); return () => clearTimeout(t); }, []);
+
+  const counterRef = useRef<HTMLDivElement[]>([]);
+
+  useEffect(() => {
+    if (!animated) return;
+    metrics.forEach((m, i) => {
+      const el = counterRef.current[i];
+      if (!el) return;
+      const num = parseFloat(m.value.replace(/[^0-9.]/g, ""));
+      if (isNaN(num)) return;
+      const prefix = m.value.match(/^[^0-9]*/)?.[0] ?? "";
+      const suffix = m.value.match(/[^0-9.]*$/)?.[0] ?? "";
+      let cur = 0; const inc = num / 60;
+      const t = setInterval(() => {
+        cur = Math.min(cur + inc, num);
+        el.textContent = prefix + (Number.isInteger(num) ? Math.round(cur).toLocaleString() : cur.toFixed(1)) + suffix;
+        if (cur >= num) clearInterval(t);
+      }, 16);
+    });
+  }, [animated, metrics]);
+
+  return (
+    <div>
+      {/* North-star */}
+      {d.north_star_kpi && (
+        <div style={{ background: C.p900, borderRadius: 14, padding: "16px 20px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", animation: "slideInUp .35s ease" }}>
+          <div>
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>North-star KPI</div>
+            <div style={{ fontSize: 22, fontWeight: 500, color: "#fff", letterSpacing: "-.5px" }}>{d.north_star_kpi}</div>
+            {d.north_star_desc && <div style={{ fontSize: 11, color: "rgba(255,255,255,.45)", marginTop: 3 }}>{d.north_star_desc}</div>}
+          </div>
+          <div style={{ fontSize: 40, color: "rgba(255,255,255,.06)" }}>★</div>
+        </div>
+      )}
+
+      {/* Metric flip cards */}
+      {metrics.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {metrics.map((m, i) => (
+            <FlipCard key={i} height={180} delay={i * 0.07}
+              face={
+                <>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".07em", marginBottom: 8 }}>{m.label}</div>
+                  <div ref={el => { if (el) counterRef.current[i] = el; }}
+                    style={{ fontSize: 28, fontWeight: 500, color: C.ink, letterSpacing: "-1px", lineHeight: 1, marginBottom: 5 }}>{m.value}</div>
+                </>
+              }
+              back={
+                <>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,.35)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 10 }}>{m.label}</div>
+                  <BackBlock label="Target" value={m.value} />
+                  <BackBlock label="Meetmethode" value="Wekelijkse rapportage via dashboard" />
+                  <BackBlock label="Actie bij miss" value="Shift budget naar best-performing kanaal" />
+                </>
+              }
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SUB-TAB NAVIGATION ───────────────────────────────────────
+const SUBTABS = [
+  { key: "funnel",      label: "Funnel" },
+  { key: "channels",    label: "Channels" },
+  { key: "retargeting", label: "Retargeting" },
+  { key: "metrics",     label: "Metrics" },
+] as const;
+type SubTab = typeof SUBTABS[number]["key"];
+
+// ─── MAIN EXPORT ──────────────────────────────────────────────
+export function SecStrategy({ d, raw }: { d: StrategyData; raw: string }) {
+  const [sub, setSub] = useState<SubTab>("funnel");
+
+  return (
+    <div>
+      {/* Sub-tab navigation */}
+      <div style={{
+        display: "flex", gap: 2, marginBottom: 18,
+        borderBottom: `.5px solid ${C.border}`, paddingBottom: 0,
+      }}>
+        {SUBTABS.map(t => (
+          <button key={t.key} onClick={() => setSub(t.key)} style={{
+            padding: "6px 14px", border: "none", background: "transparent",
+            fontSize: FS.bodySm, fontWeight: sub === t.key ? 700 : 500,
+            color: sub === t.key ? C.p700 : C.muted,
+            cursor: "pointer", position: "relative", transition: "color .2s",
+            borderBottom: sub === t.key ? `2px solid ${C.p700}` : "2px solid transparent",
+            marginBottom: -1,
+          }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content per sub-tab */}
+      <div key={sub} style={{ animation: "slideInRight .3s ease" }}>
+        {sub === "funnel"      && <TabFunnel d={d} />}
+        {sub === "channels"    && <TabChannels d={d} />}
+        {sub === "retargeting" && <TabRetargeting d={d} />}
+        {sub === "metrics"     && <TabMetrics d={d} />}
+      </div>
 
       <FeedbackBar phase="strategy" outputRaw={raw} />
     </div>
