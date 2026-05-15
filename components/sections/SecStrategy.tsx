@@ -70,12 +70,12 @@ function ChannelNetwork({ channels, overlaps }: { channels: Channel[]; overlaps:
       <svg width="100%" height="180" viewBox="0 0 440 180">
         {/* connections */}
         {overlaps.slice(0, 6).map((ov, i) => {
-          const aIdx = channels.findIndex(c => c.name === ov.channel_a);
-          const bIdx = channels.findIndex(c => c.name === ov.channel_b);
+          const aIdx = channels.findIndex(c => c.name === ov.channels?.[0]);
+          const bIdx = channels.findIndex(c => c.name === ov.channels?.[1]);
           if (aIdx < 0 || bIdx < 0 || aIdx >= n || bIdx >= n) return null;
           const a = positions[aIdx], b = positions[bIdx];
-          const thick = Math.max(1.5, (ov.synergy_score ?? 5) / 10 * 8);
-          const isHov = hovered === ov.channel_a || hovered === ov.channel_b;
+          const thick = Math.max(1.5, (ov.overlap_pct ?? 50) / 100 * 8);
+          const isHov = ov.channels?.includes(hovered ?? "") ?? false;
           return (
             <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
               stroke={isHov ? C.p700 : C.border}
@@ -88,7 +88,7 @@ function ChannelNetwork({ channels, overlaps }: { channels: Channel[]; overlaps:
         {/* nodes */}
         {channels.slice(0, n).map((ch, i) => {
           const pos = positions[i];
-          const col = stageCols[ch.funnel_stage?.toLowerCase() ?? ""] ?? C.p600;
+          const col = stageCols[ch.role?.toLowerCase()?.split(" ")[0] ?? ""] ?? C.p600;
           const isHov = hovered === ch.name;
           return (
             <g key={i} style={{ cursor: "pointer" }}
@@ -97,14 +97,14 @@ function ChannelNetwork({ channels, overlaps }: { channels: Channel[]; overlaps:
               <circle cx={pos.x} cy={pos.y} r={isHov ? nodeR + 3 : nodeR}
                 fill={col} style={{ transform: `scale(${visible ? 1 : 0})`, transformOrigin: `${pos.x}px ${pos.y}px`, transition: `transform .45s cubic-bezier(.34,1.56,.64,1) ${i * .1}s, r .2s` }} />
               <text x={pos.x} y={pos.y - 4} textAnchor="middle" fontSize={8} fontWeight="700" fill="rgba(255,255,255,.9)" fontFamily="sans-serif">{ch.name.split(" ")[0]}</text>
-              <text x={pos.x} y={pos.y + 7} textAnchor="middle" fontSize={7} fill="rgba(255,255,255,.55)" fontFamily="sans-serif">{ch.funnel_stage ?? ""}</text>
+              <text x={pos.x} y={pos.y + 7} textAnchor="middle" fontSize={7} fill="rgba(255,255,255,.55)" fontFamily="sans-serif">{ch.role ?? ""}</text>
             </g>
           );
         })}
       </svg>
       {hovered && (
         <div style={{ padding: "7px 10px", background: C.inset, borderRadius: 8, fontSize: FS.bodyXs, color: C.body }}>
-          {overlaps.find(o => o.channel_a === hovered || o.channel_b === hovered)?.insight ?? hovered}
+          {overlaps.find(o => o.channels?.includes(hovered ?? ""))?.insight ?? hovered}
         </div>
       )}
     </Card>
@@ -118,8 +118,8 @@ function VennGrid({ overlaps }: { overlaps: ChannelOverlap[] }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
       {phases.map((phase, i) => {
-        const rel = overlaps.filter(o => o.synergy_score != null).slice(i, i + 1)[0];
-        const pct = rel?.synergy_score ?? (40 + i * 15);
+        const rel = overlaps.slice(i, i + 1)[0];
+        const pct = rel?.overlap_pct ?? (40 + i * 15);
         return (
           <div key={i} style={{ background: C.inset, borderRadius: 10, padding: "10px 12px" }}>
             <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: phaseCols[i], textTransform: "uppercase" as const, letterSpacing: ".06em", marginBottom: 6 }}>{phase}</div>
