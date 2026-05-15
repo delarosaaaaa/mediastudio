@@ -97,31 +97,22 @@ export const HERO = {
 // ── Typography ─────────────────────────────────────────────────
 // 4 sizes only. Never deviate.
 export const FS = {
-  // 10px — uppercase, #888, letter-spacing .08em, weight 500
-  // Use for: card section titles, KPI labels, tab labels, column headers
-  label:      10,
-  // 13px — #0D0D0D primary, #888 secondary
-  // Use for: all list items, body text, table rows, descriptions
-  body:       13,
-  // 11px — always #888 — supporting/secondary only
-  bodySm:     11,
-  // 16px — weight 500, #0D0D0D
-  // Use for: persona names, KPI values, card primary values
-  title:      16,
-  // 22px — weight 500
-  // Use for: company name on hero cards, hero numbers
-  hero:       22,
+  // Canonical names — use these in all new code
+  label:        10,   // card section labels, KPI headers (uppercase, #888, ls .08em)
+  body:         13,   // all body text, list items, table rows
+  bodySm:       11,   // secondary/supporting text only, always #888
+  title:        16,   // persona names, KPI values, card primary values
+  hero:         22,   // hero company names, headline numbers
+  // Legacy aliases — backward compat, do NOT use in new code
+  cardLabel:    10,
+  bodyXs:       10,
+  bodyLg:       13,
+  sectionNum:    9,
+  sectionTitle: 22,
+  welcomeTitle: 36,
 } as const;
 
-// Legacy aliases (keep for backward compat)
-export const FSlegacy = {
-  cardLabel:  FS.label,
-  bodyXs:     10,
-  bodySm:     FS.bodySm,
-  body:       FS.body,
-  bodyLg:     FS.body,
-  sectionTitle: FS.hero,
-} as const;
+// FSlegacy removed — legacy names now built into FS directly
 
 // ── Spacing ────────────────────────────────────────────────────
 export const SP = {
