@@ -1,7 +1,7 @@
 "use client";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { C, FS } from "@/lib/tokens";
+import { C, FS, SP, HERO, BULLET, SERIES, cardStyle, kpiCardStyle, heroCardStyle, heroLineStyle, labelStyle } from "@/lib/tokens";
 import { FeedbackBar } from "@/components/ui/primitives";
 import { ExportPDF } from "@/components/ui/ExportPDF";
 import type { SynthesisData, SynthesisRisk, SynthesisRecommendation, SynthesisNextStep, SynthesisOutcome } from "@/lib/types";
@@ -99,7 +99,7 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
   const risks = (d.risks || []) as SynthesisRisk[];
   const recs = (d.recommendations || []) as SynthesisRecommendation[];
   const nextSteps = (d.next_steps || []) as SynthesisNextStep[];
-  const OCOLS = [C.p900, C.p700, C.p600, "#1D9E75", "#BA7517", "#A32D2D"];
+  const OUTCOME_VARIANTS: Array<keyof typeof HERO> = ["kans", "insight", "kansCard", "success", "warning", "risk"];
 
   return (
     <div>
@@ -146,12 +146,12 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
             {outcomes.length > 0 && (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 9, marginBottom: 12 }}>
                 {outcomes.map((o, i) => (
-                  <div key={i} style={{ background: C.white, borderRadius: 12, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .35s ease ${i*.08}s both` }}>
-                    <div style={{ height: 3, background: OCOLS[i % 6], borderRadius: "12px 12px 0 0" }} />
+                  <div key={i} style={{ background: HERO[OUTCOME_VARIANTS[i % 6]].bg, borderRadius: SP.radiusSm, boxShadow: C.shadow, overflow: "hidden", animation: `slideInUp .35s ease ${i*.08}s both` }}>
+                    <div style={{ height: 4, background: HERO[OUTCOME_VARIANTS[i % 6]].line, borderRadius: "12px 12px 0 0" }} />
                     <div style={{ padding: "12px 14px" }}>
-                      <div style={{ fontSize: FS.bodyXs, color: C.muted, marginBottom: 5 }}>{o.label}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: "-.5px", lineHeight: 1, marginBottom: 3 }}><AnimCounter value={o.value} delay={i * 150}/></div>
-                      {o.sub && <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{o.sub}</div>}
+                      <div style={{ fontSize: FS.label, fontWeight: 700, color: HERO[OUTCOME_VARIANTS[i % 6]].label, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 5 }}>{o.label}</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: HERO[OUTCOME_VARIANTS[i % 6]].heroText, letterSpacing: "-.5px", lineHeight: 1, marginBottom: 3 }}><AnimCounter value={o.value} delay={i * 150}/></div>
+                      {o.sub && <div style={{ fontSize: 11, color: HERO[OUTCOME_VARIANTS[i % 6]].bodyText }}>{o.sub}</div>}
                     </div>
                   </div>
                 ))}

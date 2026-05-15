@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { C, FS } from "@/lib/tokens";
+import { C, FS, SP, HERO, BULLET, SERIES, cardStyle, kpiCardStyle, heroCardStyle, heroLineStyle, labelStyle } from "@/lib/tokens";
 import { FeedbackBar } from "@/components/ui/primitives";
 import type { CompetitiveData, Competitor, PositioningBrand } from "@/lib/types";
 
@@ -15,18 +15,18 @@ type SubTab = typeof SUBTABS[number]["key"];
 
 // ─── Hero card with accent line that follows the border-radius ─
 function HeroCard({
-  label, name, desc, accentColor,
+  label, name, desc, variant,
 }: {
-  label: string; name: string; desc: string; accentColor: string;
+  label: string; name: string; desc: string; variant: "kans" | "dreiging";
 }) {
+  const h = HERO[variant];
   return (
-    <div style={{ flex: 1, background: C.white, borderRadius: 14, boxShadow: `0 2px 10px rgba(0,0,0,.07)`, overflow: "hidden" }}>
-      {/* Accent line — inside overflow:hidden so it follows the radius */}
-      <div style={{ height: 3, background: accentColor, borderRadius: "14px 14px 0 0" }} />
+    <div style={{ flex: 1, background: h.bg, borderRadius: SP.radius, boxShadow: C.shadow, overflow: "hidden" }}>
+      <div style={{ height: 4, background: h.line, borderRadius: "14px 14px 0 0" }} />
       <div style={{ padding: "16px 20px" }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".12em", marginBottom: 8 }}>{label}</div>
-        <div style={{ fontSize: 22, fontWeight: 500, color: C.ink, letterSpacing: "-.5px", marginBottom: 6 }}>{name}</div>
-        <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.65 }}>{desc}</div>
+        <div style={{ fontSize: FS.label, fontWeight: 700, color: h.label, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 8 }}>{label}</div>
+        <div style={{ fontSize: FS.hero, fontWeight: 500, color: h.heroText, letterSpacing: "-.4px", marginBottom: 6 }}>{name}</div>
+        <div style={{ fontSize: 11, color: h.bodyText, lineHeight: 1.65 }}>{desc}</div>
       </div>
     </div>
   );
@@ -34,13 +34,14 @@ function HeroCard({
 
 // ─── White space gap card with accent line ─────────────────────
 function GapCard({ num, title, desc }: { num: string; title: string; desc: string }) {
+  const h = HERO.kansCard;
   return (
-    <div style={{ background: C.white, borderRadius: 14, boxShadow: `0 2px 10px rgba(0,0,0,.07)`, overflow: "hidden" }}>
-      <div style={{ height: 3, background: C.p900, borderRadius: "14px 14px 0 0" }} />
-      <div style={{ padding: "16px 18px" }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: C.p700, marginBottom: 6 }}>{num}</div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: C.ink, marginBottom: 6, lineHeight: 1.35 }}>{title}</div>
-        <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.65 }}>{desc}</div>
+    <div style={{ background: h.bg, borderRadius: SP.radius, boxShadow: C.shadow, overflow: "hidden" }}>
+      <div style={{ height: 4, background: h.line, borderRadius: "14px 14px 0 0" }} />
+      <div style={{ padding: "14px 16px" }}>
+        <div style={{ fontSize: FS.label, fontWeight: 700, color: h.label, marginBottom: 6 }}>{num}</div>
+        <div style={{ fontSize: FS.body, fontWeight: 500, color: h.heroText, marginBottom: 5, lineHeight: 1.4 }}>{title}</div>
+        <div style={{ fontSize: 11, color: h.bodyText, lineHeight: 1.65 }}>{desc}</div>
       </div>
     </div>
   );
@@ -105,7 +106,7 @@ function PosMap({ brands, insight }: { brands: PositioningBrand[]; insight?: str
   const vault = brands.find(b => b.name.toLowerCase().includes("vault"));
 
   return (
-    <div style={{ background: C.white, borderRadius: 14, boxShadow: `0 2px 10px rgba(0,0,0,.07)`, overflow: "hidden", marginBottom: 16 }}>
+    <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", marginBottom: 16 }}>
       <div style={{ padding: "18px 20px 14px" }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: C.ink, marginBottom: 4 }}>Positioning map</div>
         <div style={{ fontSize: 11, color: C.muted }}>Hover voor positioneringstoelichting</div>
@@ -168,7 +169,7 @@ function ScoreMatrix({ competitors, sov }: { competitors: Competitor[]; sov: Com
       <div style={{ fontSize: 11, color: C.muted, marginBottom: 12 }}>Klik een concurrent voor het volledige profiel</div>
 
       {/* Matrix */}
-      <div style={{ background: C.white, borderRadius: 14, boxShadow: `0 2px 10px rgba(0,0,0,.07)`, overflow: "hidden", marginBottom: 14 }}>
+      <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", marginBottom: 14 }}>
         {/* Header */}
         <div style={{ display: "grid", gridTemplateColumns: `160px ${dims.map(() => "1fr").join(" ")}`, background: C.inset, padding: "11px 18px", gap: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 500, color: C.muted }}>Concurrent</div>
@@ -214,7 +215,7 @@ function ScoreMatrix({ competitors, sov }: { competitors: Competitor[]; sov: Com
 
       {/* Detail panel */}
       {selComp && (
-        <div style={{ background: C.white, borderRadius: 14, boxShadow: `0 2px 10px rgba(0,0,0,.07)`, overflow: "hidden", animation: "slideInUp .3s ease" }}>
+        <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", animation: "slideInUp .3s ease" }}>
           {/* Head */}
           <div style={{ padding: "18px 20px", borderBottom: `.5px solid ${C.border}`, display: "flex", alignItems: "flex-start", gap: 14 }}>
             <div style={{ width: 46, height: 46, borderRadius: 12, background: COLS[sel! % 4], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 500, color: "#fff", flexShrink: 0 }}>
@@ -313,7 +314,7 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
                 <HeroCard
                   label="Grootste kans"
                   name={biggestUnder.name}
-                  accentColor={C.p900}
+                  variant="kans"
                   desc={`Under-investeert in media met +${biggestUnder.diff}% verschil tussen marktaandeel en SOV. Klanten worden niet actief vastgehouden.`}
                 />
               )}
@@ -321,14 +322,14 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
                 <HeroCard
                   label="Grootste dreiging"
                   name={biggestOver.name}
-                  accentColor="#7F1D1D"
+                  variant="dreiging"
                   desc={`Over-indexeert op SOV met +${biggestOver.diff}% boven marktaandeel. Investeert agressief om markt te winnen.`}
                 />
               )}
             </div>
 
             {/* SOV card */}
-            <div style={{ background: C.white, borderRadius: 14, boxShadow: `0 2px 10px rgba(0,0,0,.07)`, overflow: "hidden", marginBottom: 14 }}>
+            <div style={{ background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden", marginBottom: 14 }}>
               <div style={{ padding: "16px 20px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: `.5px solid ${C.border}` }}>
                 <div style={{ fontSize: 14, fontWeight: 500, color: C.ink }}>Share of Voice vs Market Share</div>
                 <div style={{ display: "flex", gap: 14 }}>
@@ -356,7 +357,7 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
           <div>
             {posMap.length > 0
               ? <PosMap brands={posMap} insight={d.positioning_insight} />
-              : <div style={{ background: C.white, borderRadius: 14, padding: "40px 20px", textAlign: "center", color: C.muted, fontSize: FS.bodySm, marginBottom: 16, boxShadow: `0 2px 10px rgba(0,0,0,.07)` }}>Geen positioning data beschikbaar</div>
+              : <div style={{ background: C.white, borderRadius: 14, padding: "40px 20px", textAlign: "center", color: C.muted, fontSize: FS.bodySm, marginBottom: 16, boxShadow: C.shadow }}>Geen positioning data beschikbaar</div>
             }
             <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".09em", marginBottom: 12 }}>White space — niemand ownt dit nu</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>

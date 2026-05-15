@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { C, FS } from "@/lib/tokens";
+import { C, FS, SP, HERO, BULLET, SERIES, cardStyle, kpiCardStyle, heroCardStyle, heroLineStyle, labelStyle } from "@/lib/tokens";
 import { FeedbackBar } from "@/components/ui/primitives";
 import type { StrategyData, FunnelStage, Channel, ChannelOverlap, MessagingPillar, AudiencePriority, RetargetingRule, SuccessMetric } from "@/lib/types";
 
