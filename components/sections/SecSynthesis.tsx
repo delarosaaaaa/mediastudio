@@ -50,9 +50,9 @@ function RiskRadar({ risks }: { risks: SynthesisRisk[] }) {
       <svg width="144" height="144" viewBox="0 0 144 144" style={{ flexShrink: 0 }}>
         <g transform="translate(72,72)">
           {[r, r*.66, r*.33].map((rr,i) => <polygon key={i} points={Array.from({length:n}).map((_,j)=>{const a=(j/n)*Math.PI*2-Math.PI/2;return `${Math.cos(a)*rr},${Math.sin(a)*rr}`;}).join(" ")} fill="none" stroke={C.border} strokeWidth=".5"/>)}
-          {Array.from({length:n}).map((_,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;return <line key={i} x1="0" y1="0" x2={Math.cos(a)*r} y2={Math.sin(a)*r} stroke={C.border} strokeWidth=".5"/>;"})}
+          {Array.from({length:n}).map((_,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;return <line key={i} x1="0" y1="0" x2={Math.cos(a)*r} y2={Math.sin(a)*r} stroke={C.border} strokeWidth=".5"/>;})}
           <polygon points={risks.slice(0,n).map((rs,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;const rr=((lv[rs.level]??50)/100)*r;return `${Math.cos(a)*rr},${Math.sin(a)*rr}`;}).join(" ")} fill={`${C.p700}25`} stroke={C.p700} strokeWidth="1.5"/>
-          {risks.slice(0,n).map((rs,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;const rr=((lv[rs.level]??50)/100)*r;return <circle key={i} cx={Math.cos(a)*rr} cy={Math.sin(a)*rr} r="5" fill={rs.level==="high"?"#A32D2D":rs.level==="medium"?"#BA7517":C.p600} onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)} style={{ cursor: "pointer" }}/>;"})}
+          {risks.slice(0,n).map((rs,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;const rr=((lv[rs.level]??50)/100)*r;return <circle key={i} cx={Math.cos(a)*rr} cy={Math.sin(a)*rr} r="5" fill={rs.level==="high"?"#A32D2D":rs.level==="medium"?"#BA7517":C.p600} onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(null)} style={{ cursor: "pointer" }}/>;})}
         </g>
       </svg>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>

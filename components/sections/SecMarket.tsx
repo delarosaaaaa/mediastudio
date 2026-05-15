@@ -80,6 +80,31 @@ function TypewriterQuote({ text }: { text: string }) {
   );
 }
 
+
+function TrendRow({ t, delay }: { t: MarketTrend; delay: number }) {
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => { const tm = setTimeout(() => setDrawn(true), delay); return () => clearTimeout(tm); }, [delay]);
+  const col = t.direction === "up" ? C.p700 : t.direction === "down" ? "#A32D2D" : C.muted;
+  const arrow = t.direction === "up" ? "↑" : t.direction === "down" ? "↓" : "→";
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 18px", borderTop: `.5px solid ${C.border}` }}>
+      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: col, flexShrink: 0 }}>{arrow}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{t.title}</div>
+        <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.description}</div>
+      </div>
+      <svg width="60" height="24" viewBox="0 0 60 24" style={{ flexShrink: 0, marginTop: 4 }}>
+        <polyline
+          points={t.direction === "up" ? "0,20 15,16 30,13 45,9 60,4" : t.direction === "down" ? "0,4 15,8 30,12 45,16 60,20" : "0,12 20,11 40,13 60,12"}
+          fill="none" stroke={col} strokeWidth="2" strokeLinecap="round"
+          strokeDasharray="120" strokeDashoffset={drawn ? "0" : "120"}
+          style={{ transition: "stroke-dashoffset 1s ease" }}
+        />
+      </svg>
+    </div>
+  );
+}
+
 export function SecMarket({ d, raw }: { d: MarketData; raw: string }) {
   const [sub, setSub] = useState("① Marktlandschap");
   const tabs = ["① Marktlandschap", "② Trends & kansen", "③ Strategische positie"];
@@ -131,26 +156,7 @@ export function SecMarket({ d, raw }: { d: MarketData; raw: string }) {
             {trends.length > 0 && (
               <SCard delay={0}>
                 <div style={{ padding: "14px 18px 0" }}><div style={{ fontSize: FS.cardLabel, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 0 }}>Key trends</div></div>
-                {trends.map((t, i) => {
-                  const col = t.direction === "up" ? C.p700 : t.direction === "down" ? "#A32D2D" : C.muted;
-                  const arrow = t.direction === "up" ? "↑" : t.direction === "down" ? "↓" : "→";
-                  const [drawn, setDrawn] = useState(false);
-                  useEffect(() => { const tm = setTimeout(() => setDrawn(true), 200 + i * 150); return () => clearTimeout(tm); }, []);
-                  return (
-                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 18px", borderTop: `.5px solid ${C.border}` }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: `${col}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: col, flexShrink: 0 }}>{arrow}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: FS.body, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{t.title}</div>
-                        <div style={{ fontSize: FS.bodyXs, color: C.muted }}>{t.description}</div>
-                      </div>
-                      <svg width="60" height="24" viewBox="0 0 60 24" style={{ flexShrink: 0, marginTop: 4 }}>
-                        <polyline points={t.direction==="up"?"0,20 15,16 30,13 45,9 60,4":t.direction==="down"?"0,4 15,8 30,12 45,16 60,20":"0,12 20,11 40,13 60,12"}
-                          fill="none" stroke={col} strokeWidth="2" strokeLinecap="round"
-                          strokeDasharray="120" strokeDashoffset={drawn ? "0" : "120"} style={{ transition: "stroke-dashoffset 1s ease" }}/>
-                      </svg>
-                    </div>
-                  );
-                })}
+                {trends.map((t, i) => <TrendRow key={i} t={t} delay={200 + i * 150} />)}
               </SCard>
             )}
             {opps.length > 0 && (

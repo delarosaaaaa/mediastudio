@@ -37,9 +37,9 @@ function RadarMini({ dims, color }: { dims: number[]; color: string }) {
   return (
     <svg width="72" height="72" viewBox="0 0 72 72"><g transform="translate(36,36)">
       {[r, r*.75, r*.5, r*.25].map((rr, i) => <polygon key={i} points={Array.from({length:n}).map((_,j)=>{const a=(j/n)*Math.PI*2-Math.PI/2;return `${Math.cos(a)*rr},${Math.sin(a)*rr}`;}).join(" ")} fill="none" stroke={C.border} strokeWidth=".5"/>)}
-      {Array.from({length:n}).map((_,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;return <line key={i} x1="0" y1="0" x2={Math.cos(a)*r} y2={Math.sin(a)*r} stroke={C.border} strokeWidth=".5"/>;"})}
+      {Array.from({length:n}).map((_,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;return <line key={i} x1="0" y1="0" x2={Math.cos(a)*r} y2={Math.sin(a)*r} stroke={C.border} strokeWidth=".5"/>;})}
       <polygon points={radarPts(dims,r,n)} fill={color} opacity=".25" stroke={color} strokeWidth="1.5"/>
-      {dims.map((d,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;const rr=(d/100)*r;return <circle key={i} cx={Math.cos(a)*rr} cy={Math.sin(a)*rr} r="3" fill={color}/>;"})}
+      {dims.map((d,i)=>{const a=(i/n)*Math.PI*2-Math.PI/2;const rr=(d/100)*r;return <circle key={i} cx={Math.cos(a)*rr} cy={Math.sin(a)*rr} r="3" fill={color}/>;})}
     </g></svg>
   );
 }
@@ -75,6 +75,34 @@ function PersonaFlip({ p, index }: { p: PersonaData; index: number }) {
           {p.pain_points?.slice(0, 3).map((pp, i) => <div key={i} style={{ display: "flex", gap: 8, marginBottom: 9, alignItems: "flex-start" }}><div style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,.4)", marginTop: 6, flexShrink: 0 }} /><div style={{ fontSize: FS.bodySm, color: "rgba(255,255,255,.85)", lineHeight: 1.55 }}>{pp}</div></div>)}
           {p.trigger_moments?.[0] && <div style={{ marginTop: 10, padding: "8px 10px", background: "rgba(255,255,255,.1)", borderRadius: 8 }}><div style={{ fontSize: FS.bodyXs, color: "rgba(255,255,255,.5)", marginBottom: 3 }}>Trigger moment</div><div style={{ fontSize: FS.bodySm, color: "rgba(255,255,255,.8)" }}>{p.trigger_moments[0]}</div></div>}
           <div style={{ marginTop: "auto", fontSize: FS.bodyXs, color: "rgba(255,255,255,.35)", textAlign: "center" }}>↩ Klik om terug te draaien</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function BarrierFlip({ barrier, solution, index }: { barrier: string; solution: string; index: number }) {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <div onClick={() => setFlipped(f => !f)} style={{ perspective: 900, height: 100, cursor: "pointer", animation: `slideInUp .35s ease ${index * .07}s both` }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", transition: "transform .48s cubic-bezier(.4,0,.2,1)", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "none" }}>
+        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden" }}>
+          <div style={{ height: 3, background: C.inset, borderRadius: "14px 14px 0 0" }} />
+          <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>Barrier</div>
+              <div style={{ fontSize: FS.bodyLg, fontWeight: 500, color: C.ink }}>{barrier}</div>
+            </div>
+            <div style={{ fontSize: FS.bodyXs, color: C.faint }}>→ klik voor antwoord</div>
+          </div>
+        </div>
+        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.p900, borderRadius: 14, transform: "rotateY(180deg)", overflow: "hidden" }}>
+          <div style={{ height: 3, background: C.p700, borderRadius: "14px 14px 0 0" }} />
+          <div style={{ padding: "14px 18px" }}>
+            <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: "rgba(255,255,255,.4)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>Vault's antwoord</div>
+            <div style={{ fontSize: FS.bodyLg, fontWeight: 500, color: "#fff" }}>{solution}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -143,32 +171,7 @@ export function SecAudience({ d, raw }: { d: AudienceData; raw: string }) {
         {/* ── TAB 3: BARRIERS ── */}
         {sub === tabs[2] && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {(d.barriers || []).map((b, i) => {
-              const [flipped, setFlipped] = useState(false);
-              return (
-                <div key={i} onClick={() => setFlipped(f => !f)} style={{ perspective: 900, height: 100, cursor: "pointer", animation: `slideInUp .35s ease ${i * .07}s both` }}>
-                  <div style={{ position: "relative", width: "100%", height: "100%", transition: "transform .48s cubic-bezier(.4,0,.2,1)", transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "none" }}>
-                    <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.white, borderRadius: 14, boxShadow: C.shadow, overflow: "hidden" }}>
-                      <div style={{ height: 3, background: C.inset, borderRadius: "14px 14px 0 0" }} />
-                      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div>
-                          <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: C.muted, textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>Barrier</div>
-                          <div style={{ fontSize: FS.bodyLg, fontWeight: 500, color: C.ink }}>{b.barrier}</div>
-                        </div>
-                        <div style={{ fontSize: FS.bodyXs, color: C.faint }}>→ klik voor antwoord</div>
-                      </div>
-                    </div>
-                    <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", background: C.p900, borderRadius: 14, transform: "rotateY(180deg)", overflow: "hidden" }}>
-                      <div style={{ height: 3, background: C.p700, borderRadius: "14px 14px 0 0" }} />
-                      <div style={{ padding: "14px 18px" }}>
-                        <div style={{ fontSize: FS.bodyXs, fontWeight: 700, color: "rgba(255,255,255,.4)", textTransform: "uppercase" as const, letterSpacing: ".08em", marginBottom: 5 }}>Vault's antwoord</div>
-                        <div style={{ fontSize: FS.bodyLg, fontWeight: 500, color: "#fff" }}>{b.solution}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {(d.barriers || []).map((b, i) => <BarrierFlip key={i} barrier={b.barrier} solution={b.solution} index={i} />)}
           </div>
         )}
       </div>
