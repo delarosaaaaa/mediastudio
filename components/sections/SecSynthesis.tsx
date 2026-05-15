@@ -146,7 +146,7 @@ export function SecSynthesis({ d, raw, outputs, parsed }: {
       {paragraphs.length > 0 && <SummaryTypewriter paragraphs={paragraphs} />}
 
       {/* Strategic core */}
-      {d.strategic_core?.length > 0 && (
+      {(d.strategic_core?.length ?? 0)>0 && (
         <div style={{ marginBottom: 10 }}>
           <SectionLabel>Strategic core</SectionLabel>
           <Card>

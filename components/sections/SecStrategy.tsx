@@ -30,7 +30,7 @@ function AnimatedFunnel({ stages }: { stages: FunnelStage[] }) {
               onMouseLeave={() => setHovered(null)}
               style={{ background: col, padding: "13px 15px", cursor: "pointer", transform: hovered === i ? "translateX(5px)" : "none", transition: "transform .2s" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: FS.body, fontWeight: 700, color: tc }}>{s.stage ?? s.name}</span>
+                <span style={{ fontSize: FS.body, fontWeight: 700, color: tc }}>{s.name}</span>
                 <span style={{ fontSize: FS.bodyXs, color: tc2 }}>{s.budget_pct ? `${s.budget_pct}%` : ""} · {s.channels?.slice(0, 2).join(", ")}</span>
               </div>
               <div style={{ height: 3, background: lightBg ? "rgba(26,0,80,.12)" : "rgba(255,255,255,.18)", borderRadius: 2, marginTop: 8, overflow: "hidden" }}>

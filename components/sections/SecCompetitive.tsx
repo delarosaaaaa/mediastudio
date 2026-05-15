@@ -199,7 +199,7 @@ export function SecCompetitive({ d, raw }: { d: CompetitiveData; raw: string }) 
           }</>}
       />
 
-      {d.market_gaps?.length > 0 && (
+      {(d.market_gaps?.length ?? 0)>0 && (
         <div style={{ marginBottom: 9 }}>
           <SectionLabel>White space opportunities</SectionLabel>
           <Card>
